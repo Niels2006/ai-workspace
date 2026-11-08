@@ -95,10 +95,10 @@
       <li><b>移动</b>按住鼠标左键，鲨鱼始终朝光标方向匀速游动</li>
       <li><b>黄金猎物</b>只有发光的金色生物能提供经验并升级，其余猎物只能恢复血量</li>
       <li><b>生存</b>血量会随时间匀速流失，停止进食就会被饿死</li>
-      <li><b>危险</b>敌对鲨鱼、海豹、魔鬼鱼、螃蟹、毒水母、水雷与潜艇鱼雷</li>
+      <li><b>危险</b>敌对鲨鱼、魔鬼鱼、螃蟹、毒水母、水雷与潜艇鱼雷；灰白色的海豹一旦咬住你就会撕扯 1.5 秒，期间无法吞食任何生物——按 A 加速可立即挣脱，等它松口后趁冷却期反杀</li>
       <li><b>捕食者感知</b>危险生物的感知范围与其等级成正比——被察觉就会加速追击你；按住 A 加速游出感知圈即可摆脱，捕食者会短暂放弃追击</li>
       <li><b>危机感应</b>更高级的鲨鱼或红色潜艇靠近时，视野会按威胁等级分级拉远示警，威胁越大缩得越多</li>
-      <li><b>撞角战术</b>等级4或5的鲨鱼按住 A 加速冲刺，迎面猛撞红色潜艇的艇艏可将其一击撞沉（+800 分）；等级6的巨齿鲨按 A 加速撞击潜艇任何部位都能直接撞沉</li>
+      <li><b>撞角战术</b>等级4或5的鲨鱼按住 A 加速冲刺，迎面猛撞红色潜艇的艇艏可将其一击撞毁（+800 分）；等级6的巨齿鲨按 A 加速撞击潜艇任何部位都能直接撞毁——被撞毁的潜艇会先带着焦黑火光挣扎下沉 1.5 秒，随后爆炸解体成几块艇身碎块</li>
       <li><b>领域本能</b>每片海域的居民都固守自己的领地——猎物与危险生物都绝不游离所在海域；危险生物察觉你闯入感知圈便会立即发起攻击，但你一旦逃出它的海域，它便止步于边界无法再追</li>
       <li><b>海图</b>按 M 键随时查看海洋区域图，白色标记是你所在位置——你出生在正中央的翡翠浅滩，向左向右皆可远征；T3 以上巨鲨驻守外围海域，离中央越远越危险</li>
       <li><b>门户</b>九大海域之间有悬空巨岩相隔，八座拱门深度高低错落，水道足以让大白鲨通行：龙涎深渊 —深渊之门— 极地冰海 —冰火隘— 海岭热泉 —热泉峡谷— 蓝晶湾 —蓝晶门— 翡翠浅滩 —珊瑚门— 珊瑚礁林 —沉船峡— 沉船斜坡 —断桅门— 荧光海渊 —幽光门— 幽绿深渊；蓝晶湾与正下方的雷盆深穴之间同样由巨岩相隔——雷盆岩盖横贯沉井口，仅中央沉井通道垂直贯通</li>
@@ -387,7 +387,7 @@ const SFX = {
     o.connect(g); g.connect(this.master);
     o.start(t); o.stop(t + dur + 0.05);
   },
-  noise(dur,vol,freq){
+  noise(dur,vol,freq,delay){
     if(!this.ac || this.muted) return;
     const n = Math.floor(this.ac.sampleRate * dur);
     const buf = this.ac.createBuffer(1, n, this.ac.sampleRate);
@@ -396,10 +396,27 @@ const SFX = {
     const src = this.ac.createBufferSource(); src.buffer = buf;
     const f = this.ac.createBiquadFilter(); f.type='lowpass'; f.frequency.value = freq || 800;
     const g = this.ac.createGain(); g.gain.value = vol || 0.4;
-    src.connect(f); f.connect(g); g.connect(this.master); src.start();
+    src.connect(f); f.connect(g); g.connect(this.master);
+    src.start(this.ac.currentTime + (delay || 0));
   },
-  eat(){ this.tone(520,180,0.16,'square',0.2); },
-  bigEat(){ this.tone(300,90,0.3,'sawtooth',0.26); this.noise(0.14,0.16,900); },
+  /* 进食声参考真实水下鲨鱼进食声设计：低频咬合闷响（snap/impact）+
+     碎骨脆响（bone crack）+ 湿润撕裂声（tearing）+ 水花余音（splash），
+     替代原先 arcade 风格的方波哔哔声 */
+  eat(){
+    this.tone(150, 46, 0.14, 'sine', 0.5);          // 咬合低频冲击
+    this.noise(0.10, 0.22, 700);                    // 湿润咬合水声
+    this.noise(0.035, 0.20, 2600, 0.045);           // 碎骨脆响
+    this.noise(0.16, 0.10, 450, 0.09);              // 撕扯余音
+  },
+  bigEat(){
+    this.tone(105, 32, 0.30, 'sine', 0.62);         // 更深的咬合冲击
+    this.tone(58, 24, 0.4, 'sawtooth', 0.16);       // 低频吼鸣层
+    this.noise(0.14, 0.30, 900);                    // 猛烈撕咬
+    this.noise(0.04, 0.26, 3000, 0.07);             // 骨裂脆响①
+    this.noise(0.05, 0.22, 2400, 0.16);             // 骨裂脆响②
+    this.noise(0.40, 0.16, 600, 0.20);              // 长撕裂
+    this.noise(0.30, 0.12, 1200, 0.42);             // 水花翻涌
+  },
   hurt(){ this.tone(230,70,0.24,'sawtooth',0.36); },
   explosion(){ this.noise(0.7,0.7,320); this.tone(120,28,0.5,'sine',0.55); },
   levelup(){ [523,659,784,1046].forEach((f,i)=>this.tone(f,f,0.15,'triangle',0.26,i*0.09)); },
@@ -436,7 +453,7 @@ function updateThreatZoom(dt){
     for(const e of entities){
       if(e.dead) continue;
       if(e.kind === 'sub'){
-        if(dist(e.x, e.y, player.x, player.y) < 2100){ sev = Math.max(sev, 5); }
+        if(!e.wrecked && dist(e.x, e.y, player.x, player.y) < 2100){ sev = Math.max(sev, 5); }
       } else if(e.kind === 'shark' && e.level > player.level &&
                 dist(e.x, e.y, player.x, player.y) < 480 + 320 * e.level){
         sev = Math.max(sev, e.level);
@@ -528,6 +545,7 @@ function newPlayer(){
     kind:'player', x:41000, y:-260, a:0, speed:0, size:SHARK_TYPES[1].r,   // 出生点：地图正中央·翡翠浅滩；体型与同级礁鲨一致
     level:1, xp:0, hp:100, maxHp:100, sta:100, maxSta:100,
     exhausted:false, poisonT:0, poisonAcc:0, iFrames:0, devourCd:0,
+    grabT:0, grabbedBy:null,
     eatT:0, tailPhase:0, kvx:0, kvy:0, dead:false, intro:true, splashed:false, vy:0
   };
 }
@@ -560,6 +578,7 @@ function damagePlayer(dmg, src, force){
 function die(cause){
   if(player.dead) return;
   player.dead = true;
+  if(player.grabbedBy) releaseGrab(false);   // 死亡即松口
   deathCause = cause || deathCause || '未知';
   bloodFX(player.x, player.y, 30);
   shakeIt(10, 0.5);
@@ -599,6 +618,25 @@ function updatePlayer(dt){
     return;
   }
   p.iFrames -= dt; p.devourCd -= dt;
+  // ---- 海豹撕扯：被咬住 1.5 秒；按 A 加速立即挣脱（体力耗尽则只能等它松口）----
+  if(p.grabT > 0){
+    p.grabT -= dt;
+    if(!p.grabbedBy || p.grabbedBy.dead) releaseGrab(false);
+    else if(keys['a'] && !p.exhausted && p.sta > 0) releaseGrab(true);
+    else if(p.grabT <= 0) releaseGrab(false);
+    else {
+      // 撕扯动态反馈：咬点处间歇喷血雾与气泡翻涌，屏幕随之轻微震颤
+      const seal = p.grabbedBy;
+      p.grabFX = (p.grabFX || 0) - dt;
+      if(p.grabFX <= 0){
+        p.grabFX = 0.22;
+        bloodFX(seal.x, seal.y, 3);
+        bubbleFX(seal.x + rand(-14,14), seal.y + rand(-14,14), rand(2,5));
+        bubbleFX(seal.x + rand(-14,14), seal.y + rand(-14,14), rand(2,5));
+        shakeIt(2.5, 0.12);
+      }
+    }
+  }
   p.eatT = Math.max(0, p.eatT - dt);
   // ---- 毒素 ----
   if(p.poisonT > 0){
@@ -631,7 +669,8 @@ function updatePlayer(dt){
       p.sta = Math.min(p.maxSta, p.sta + 14 * dt);
     }
     // 等级越高游速越快（T1=274 → T5=370）；巨齿鲨 T6 额外提速至 484，远超所有敌鲨（T6 敌鲨 336）
-    const baseSpd = 250 + 24 * p.level + (p.level >= 6 ? 90 : 0);
+    // 被海豹咬住时被拖拽，速度大幅降低
+    const baseSpd = (250 + 24 * p.level + (p.level >= 6 ? 90 : 0)) * (p.grabT > 0 ? 0.4 : 1);
     p.speed = lerp(p.speed, boosting ? baseSpd * 1.85 : baseSpd, 3.5 * dt);
     if(Math.random() < dt * (boosting ? 34 : 10)) bubbleFX(p.x - Math.cos(p.a)*p.size, p.y - Math.sin(p.a)*p.size*0.4, rand(2,5));
   } else {
@@ -1042,6 +1081,22 @@ function fleeFrom(e, tx, ty, spd, dt){
   steer(e, e.x*2 - tx, e.y*2 - ty, spd, dt, 3.2);
 }
 function updateEntity(e, dt){
+  // 死亡过渡：被吞食后残躯定格一瞬（失去行动力），随后才撕裂成鱼块/血雾消散
+  if(e.dying !== undefined){
+    e.dying -= dt;
+    e.vx = 0; e.vy = 0;
+    if(e.dying <= 0){
+      e.dead = true;
+      if(e.bigKill){
+        bigKillFX(e.x, e.y, e.r, e);
+        particles.push({type:'flash', x:e.x, y:e.y, r:e.r, life:0.3, t:0});
+      } else {
+        bloodFX(e.x, e.y, e.r > 18 ? 12 : 7);
+        for(let i=0;i<4;i++) bubbleFX(e.x + rand(-e.r, e.r), e.y + rand(-e.r, e.r), rand(2,5));
+      }
+    }
+    return;
+  }
   const ex0 = e.x;             // 门户岩体封锁横越时回退用
   e.phase += dt * (2 + Math.hypot(e.vx, e.vy) * 0.02);
   e.atkCd -= dt;
@@ -1097,11 +1152,26 @@ function updateEntity(e, dt){
     case 'seal': case 'manta': {
       // 感知-追击-放弃：感知范围与自身等级成正比；玩家加速逃出感知圈即放弃追击，
       // 逃出它所在的海域同样放弃（危险生物绝不离开自身海域）
+      if(e.grabCd > 0) e.grabCd -= dt;
+      // 海豹咬住玩家：钉在咬住的部位（头/身/尾）持续撕扯，直到玩家按 A 挣脱或 1.5 秒后松口
+      if(e.kind === 'seal' && e.grabbing && player && !player.dead && player.grabbedBy === e){
+        const wa = player.a + (e.grabRel || 0);   // 咬点随鲨鱼转向而移动
+        // 撕扯动态：海豹绕咬点快速左右甩头，身体随之扭转——像真实海豹撕咬猎物一样
+        const tug = Math.sin(tGlobal * 9 + (e.id || 0));
+        const wob = wa + Math.sin(tGlobal * 5.5 + (e.id || 0)) * 0.16;
+        e.x = player.x + Math.cos(wob) * (player.size * 1.05 + e.r * 0.45);
+        e.y = player.y + Math.sin(wob) * (player.size * 1.05 + e.r * 0.45) + tug * 6;
+        e.a = wob + Math.PI + tug * 0.24;
+        e.vx = 0; e.vy = 0;
+        e.biteAnim = 1;
+        break;
+      }
       const perR = 480 + 320 * e.level;
+      const canHunt = e.kind === 'seal' ? !(e.grabCd > 0) : !edible;   // 海豹主动咬人（松口冷却期除外）
       if(e.aggroCd > 0) e.aggroCd -= dt;
       if(e.aggro){
         if(dToP > perR * 1.3 || playerOutsideHome(e)){ e.aggro = false; e.aggroCd = 2.5; }
-      } else if(pAlive && !edible && dToP < perR && !(e.aggroCd > 0)){
+      } else if(pAlive && canHunt && dToP < perR && !(e.aggroCd > 0)){
         e.aggro = true;   // 玩家进入感知范围即锁定追击
       }
       if(e.aggro && pAlive){
@@ -1137,6 +1207,37 @@ function updateEntity(e, dt){
       break;
     }
     case 'sub': {
+      // 受创残躯状态：失去动力、艏倾下沉、冒烟冒泡冒火花，间歇性内部闷爆 + 破口漏油，1.5 秒后爆炸解体成碎块
+      if(e.wrecked){
+        e.wreckT -= dt;
+        e.pitch = Math.min(0.5, (e.pitch || 0) + 0.16 * dt);
+        e.x += (e.vx || 0) * dt * 0.12;
+        e.y += 16 * dt;
+        e.vx = 0; e.vy = 0;
+        e.y = Math.min(e.y, terrainH(e.x) - e.r * 0.5);   // 残躯搁浅在海底上
+        if(Math.random() < dt * 15) particles.push({type:'smoke', x:e.x+rand(-e.r,e.r), y:e.y+rand(-e.r*0.6,e.r*0.3), r:rand(6,14), life:rand(1.2,2.2), t:0});
+        if(Math.random() < dt * 8)  bubbleFX(e.x+rand(-e.r,e.r), e.y+rand(-e.r*0.5,e.r*0.4), rand(2,6));
+        if(Math.random() < dt * 6){
+          const sx = e.x + rand(-e.r*0.9, e.r*0.9), sy = e.y + rand(-e.r*0.4, e.r*0.4);
+          particles.push({type:'spark', x:sx, y:sy, r:rand(2,4), life:rand(0.25,0.55), t:0, vx:rand(-60,60), vy:rand(-80,-20)});
+        }
+        if(Math.random() < dt * 10){   // 破口漏油：暗黑油渍缓慢上浮扩散
+          particles.push({type:'oil', x:e.x+rand(-e.r*0.8,e.r*0.8), y:e.y+rand(-e.r*0.4,e.r*0.3),
+            r:rand(5,10), life:rand(2.0,3.2), t:0, vx:rand(-8,8), vy:-rand(8,18)});
+        }
+        e.boomCd = (e.boomCd || rand(0.2, 0.45)) - dt;
+        if(e.boomCd <= 0){             // 间歇性内部闷爆：舱内结构殉爆
+          e.boomCd = rand(0.28, 0.6);
+          const bx = e.x + rand(-e.r, e.r), by = e.y + rand(-e.r*0.5, e.r*0.5);
+          particles.push({type:'flash', x:bx, y:by, r:rand(28,52), life:0.3, t:0});
+          particles.push({type:'ring', x:bx, y:by, r:8, life:0.4, t:0, color:'rgba(255,180,90,'});
+          sparkFX(bx, by);
+          shakeIt(3, 0.12);
+          SFX.tone(95, 34, 0.18, 'sine', 0.28);
+        }
+        if(e.wreckT <= 0) subExplode(e);
+        break;
+      }
       // 鱼式游动：缓转追踪巡逻目标 + 正弦摆尾，发现玩家后提速追击；严格限域不进入门户水道
       const z = e.zone;
       const hunting = pAlive && dToP < 1500;
@@ -1190,7 +1291,8 @@ function updateEntity(e, dt){
    进食 / 伤害判定
 ================================================================ */
 function eat(e){
-  e.dead = true;
+  // 死亡过渡：被吞食后残躯先定格一瞬，随后才撕裂成鱼块（在 updateEntity 的 dying 分支中结算）
+  e.dying = 0.22;
   const s = SP[e.kind];
   const food = s.food + (e.kind === 'shark' ? e.level * 10 : 0);
   const heal = Math.max(4, Math.round(food * 0.7));
@@ -1206,24 +1308,64 @@ function eat(e){
   } else {
     addPopup(e.x, e.y - 10, '+' + heal + ' 血量', '#9dff6b');
   }
-  // 体积较大的危险生物（海豹/魔鬼鱼/二级以上鲨鱼）：大型猎杀特效 + 猎杀浮字
-  const bigKill = !!s.dangerous && e.r >= 60;
-  if(bigKill){
-    bigKillFX(e.x, e.y, e.r);
-    addPopup(e.x, e.y - 34, '猎杀 ' + s.name + '！', '#ff8a8a', 1.5, true);
-  }
-  bloodFX(e.x, e.y, bigKill ? 10 : (e.r > 18 ? 14 : 8));
+  // 大型猎物撕裂特效：魔鬼鱼 / 二级以上鲨鱼（海豹只是普通吞食，不加特效）
+  // 撕裂本体延迟到过渡结束时爆发，先看到完整的生物定格，再裂成鱼块
+  e.bigKill = !!s.dangerous && e.r >= 60 && e.kind !== 'seal';
+  if(e.bigKill) addPopup(e.x, e.y - 34, '猎杀 ' + s.name + '！', '#ff8a8a', 1.5, true);
+  bloodFX(e.x, e.y, e.bigKill ? 6 : (e.r > 18 ? 9 : 5));
   player.eatT = 1.1; player.devourCd = 0.22;
   if(e.r > 20) SFX.bigEat(); else SFX.eat();
-  if(!bigKill) shakeIt(3, 0.12);   // 大型猎杀的震屏由 bigKillFX 按体型放大
+  if(!e.bigKill) shakeIt(3, 0.12);   // 大型猎杀的震屏由 bigKillFX 按体型放大
   checkLevel();
+}
+/* ---- 海豹撕咬：接触即咬住玩家 1.5 秒，期间无法吞食任何生物 ----
+   按 A 加速立即挣脱（海豹被甩飞并进入 5 秒冷却，冷却期内可被正常吞食）；
+   不挣脱则 1.5 秒后海豹自动松口 */
+function sealGrab(e){
+  // 咬住的位置取决于海豹从鲨鱼哪个方向扑来：正前咬头、侧向咬身、后方咬尾；
+  // 记录相对鲨鱼朝向的偏角，撕扯期间随鲨鱼转向而移动
+  let rel = angTo(player.x, player.y, e.x, e.y) - player.a;
+  rel = (rel + Math.PI*3) % TAU - Math.PI;
+  e.grabRel = rel;
+  const part = Math.abs(rel) < 1.0 ? '头' : (Math.abs(rel) > 2.1 ? '尾巴' : '身子');
+  player.grabT = 1.5;
+  player.grabbedBy = e;
+  e.grabbing = true;
+  e.aggro = false;
+  damagePlayer(SP.seal.dmg, '被海豹咬住撕扯', true);
+  addPopup(player.x, player.y - 62, '海豹咬住了你的' + part + '！按 A 挣脱！', '#ffcf9e', 1.7, true);
+  // 咬中瞬间：咬点血雾 + 气泡猛烈翻涌
+  bloodFX(e.x, e.y, 8);
+  for(let i=0;i<6;i++) bubbleFX(e.x + rand(-18,18), e.y + rand(-18,18), rand(2,6));
+  shakeIt(7, 0.3);
+}
+function releaseGrab(freed){
+  const e = player.grabbedBy;
+  player.grabT = 0; player.grabbedBy = null;
+  if(!e || e.dead) return;
+  e.grabbing = false;
+  e.grabCd = 5;
+  e.aggro = false; e.aggroCd = 2.5;
+  e.biteAnim = 0;
+  if(freed){
+    const a = player.a;
+    e.x += Math.cos(a) * 90; e.y += Math.sin(a) * 90;   // 甩飞出海豹
+    addPopup(player.x, player.y - 62, '挣脱成功！', '#9dff6b', 1.3, true);
+    // 甩飞瞬间：咬点血雾残留 + 气泡爆发 + 水花冲击环
+    bloodFX(e.x, e.y, 5);
+    for(let i=0;i<8;i++) bubbleFX(e.x + rand(-20,20), e.y + rand(-20,20), rand(2,6));
+    particles.push({type:'ring', x:e.x, y:e.y, r:14, life:0.5, t:0, color:'rgba(220,240,255,'});
+    SFX.smash(); shakeIt(5, 0.2);
+  } else {
+    addPopup(player.x, player.y - 62, '海豹松口了', '#c9e6fa');
+  }
 }
 function contacts(){
   if(!player || player.dead || player.intro) return;
   const mx = player.x + Math.cos(player.a) * player.size * 1.15;
   const my = player.y + Math.sin(player.a) * player.size * 1.15;
   for(const e of entities){
-    if(e.dead) continue;
+    if(e.dead || e.dying !== undefined) continue;   // 濒死残躯不再参与碰撞/吞食
     if(e.kind === 'mine'){
       if(e.fuse < 0 && dist(e.x, e.y, player.x, player.y) < e.r + player.size * 0.8)
         e.fuse = 0.05;
@@ -1239,25 +1381,36 @@ function contacts(){
                       dist(mx, my, noseX, e.y) < player.size + e.r * 0.8;
       const megaHit = player.level >= 6 && player.boosting &&
                       dist(player.x, player.y, e.x, e.y) < player.size + e.r * 2;
-      if((noseHit || megaHit) && player.devourCd <= 0){
+      // 两段式死亡：撞毁后先进入 1.5 秒受创残躯状态（下沉冒烟），随后爆炸解体成碎块
+      if((noseHit || megaHit) && player.devourCd <= 0 && !e.wrecked){
+        e.wrecked = true;
+        e.wreckT = 1.5;
         e.hp = 0;
-        e.dead = true;
         score += 800;
         player.devourCd = 0.8;
         const kb = angTo(e.x, e.y, player.x, player.y);
         player.kvx += Math.cos(kb) * 420;
         player.kvy += Math.sin(kb) * 420;
-        subWreckFX(e.x, e.y);
-        SFX.explosion(); SFX.smash();
-        addPopup(e.x, e.y, '+800 撞沉潜艇！', '#ffd75e', 1.6, true);
+        sparkFX(e.x, e.y);
+        SFX.smash();
+        shakeIt(10, 0.35);
+        addPopup(e.x, e.y, '+800 撞毁潜艇！', '#ffd75e', 1.6, true);
       }
       continue;
     }
     const edible = e.level <= player.level;
     const dm = dist(e.x, e.y, mx, my);
     const db = dist(e.x, e.y, player.x, player.y);
-    // 进食：嘴部或身体接触均可吞下（判定放宽，保证吃得到）
-    if(edible && player.devourCd <= 0 &&
+    // 海豹撕咬：接触即咬住（松口冷却期内则可被正常吞食）；已被咬住时海豹不再触发接触
+    if(e.kind === 'seal'){
+      if(player.grabT > 0) continue;
+      if(!(e.grabCd > 0) &&
+         (dm < e.r + player.size * 0.85 || db < e.r + player.size * 0.55)){
+        sealGrab(e); continue;
+      }
+    }
+    // 进食：嘴部或身体接触均可吞下（判定放宽，保证吃得到）；被海豹咬住期间无法吞食
+    if(edible && player.devourCd <= 0 && player.grabT <= 0 &&
        (dm < e.r + player.size * 0.85 || db < e.r + player.size * 0.55)){
       eat(e); continue;
     }
@@ -1346,14 +1499,18 @@ function explodeMine(e){
     if(od >= R) continue;
     if(o.kind === 'mine'){ if(o.fuse < 0) o.fuse = rand(0.12, 0.3); }
     else if(o.kind === 'sub'){
+      if(o.wrecked) continue;   // 残躯状态不再重复结算伤害
       o.hp--;
       bloodFX(o.x, o.y, 8);
       if(o.hp <= 0){
-        o.dead = true;
+        // 两段式死亡：进入残躯状态，1.5 秒后爆炸解体
+        o.wrecked = true;
+        o.wreckT = 1.5;
         score += 800;
         addPopup(o.x, o.y, '+800 击沉潜艇！', '#ffd75e', 1.6, true);
-        subWreckFX(o.x, o.y);
-        SFX.explosion(); SFX.smash();
+        sparkFX(o.x, o.y);
+        SFX.smash();
+        shakeIt(10, 0.35);
       }
     } else { o.dead = true; bloodFX(o.x, o.y, 10); }
   }
@@ -1391,33 +1548,105 @@ function ringFX(x,y,c){
   particles.push({type:'ring', x, y, r:14, life:0.7, t:0, color:'rgba(' + r_ + ',' + g_ + ',' + b_ + ','});
 }
 function explosionFX(x,y){ sparkFX(x,y); bloodFX(x,y,6); }
-/* ---- 大型猎杀特效：吞食体积较大的危险生物（海豹 / 魔鬼鱼 / 二级以上鲨鱼）----
-   猛烈血雾爆发 + 双重血红冲击环 + 按体型放大的震屏 */
-function bigKillFX(x, y, r){
-  const n = Math.round(clamp(r * 0.55, 24, 60));
-  for(let i=0;i<n;i++){
-    const a = rand(0, TAU), s = rand(30, 200) * clamp(r / 100, 0.6, 2.2);
-    particles.push({type:'blood', x:x+rand(-r*0.4,r*0.4), y:y+rand(-r*0.4,r*0.4),
-      r:rand(4,11), life:rand(0.9,2.0), t:0, vx:Math.cos(a)*s, vy:Math.sin(a)*s});
+/* ---- 大型猎杀特效：魔鬼鱼 / 二级以上鲨鱼被撕裂成鱼块 ----
+   关键：鱼块保留生物本身的体色（鲨鱼用其等级配色、魔鬼鱼用其体盘色），
+   并生成带眼睛与獠牙的鱼头块、新月尾鳍块、带撕裂断面的躯干块——一眼可辨是哪种生物 */
+function bigKillFX(x, y, r, e){
+  const pal = { body:'#5a6b7a', belly:'#9fb4c4', fin:'#3c4a58' };
+  if(e && e.kind === 'shark'){
+    const st = SHARK_TYPES[e.level] || SHARK_TYPES[3];
+    pal.body = st.body; pal.belly = st.belly; pal.fin = st.fin;
+  } else if(e && e.kind === 'manta'){
+    pal.body = '#2e3a4a'; pal.belly = '#9fb4c4'; pal.fin = '#232c3a';
   }
-  particles.push({type:'ring', x, y, r:r*0.8,  life:0.8, t:0, color:'rgba(255,70,70,'});
-  particles.push({type:'ring', x, y, r:r*0.45, life:1.15, t:0, color:'rgba(185,25,40,'});
+  // 面积守恒：先估算生物轮廓面积（椭圆近似），再按比例反推每块鱼块的尺寸，
+  // 保证所有鱼块的渲染面积总和与完整生物的轮廓面积大致相等
+  // （鲨鱼类按体长 1.9r、体高 0.62r 的椭圆估算；魔鬼鱼体盘更宽更圆）
+  const isManta = e && e.kind === 'manta';
+  const bodyA = Math.PI * (isManta ? r*2.1 : r*1.9) * (isManta ? r*1.5 : r*0.62);
+  // 各形态鱼块的单块渲染面积 ≈ 系数 × 半径²（按绘制轮廓实测估算）
+  const cHead = 2.2, cTail = 1.3, cBody = 2.1;
+  const rHead = clamp(Math.sqrt(bodyA*0.20/cHead), 14, 76);   // 头块占 20%
+  const rTail = clamp(Math.sqrt(bodyA*0.10/cTail), 12, 60);   // 尾块占 10%
+  const n = clamp(Math.round(r * 0.10), 6, 13);
+  const rBody = Math.sqrt(bodyA*0.70/n/cBody);                // 其余 70% 均分给躯干块
+  const scale = clamp(r / 100, 0.6, 2.2);
+  // 体轴过渡：鱼块沿生物原本的朝向分布——头块钉在吻部、尾块钉在尾柄、躯干块沿脊柱排列，
+  // 各块沿体轴方向甩出，呈现"完整的生物沿体轴被撕开"的过渡感
+  const ang = (e && e.a) || 0;
+  const ax = Math.cos(ang), ay = Math.sin(ang);
+  const qx = -ay, qy = ax;
+  const mkGib = (gx, gy, sz, col, shape, dir) => {
+    const a = rand(0, TAU), s = rand(70, 260) * scale;
+    const verts = [];
+    for(let j=0;j<7;j++){
+      const va = j / 7 * TAU, vr2 = rand(0.6, 1.05);
+      verts.push([Math.cos(va)*vr2, Math.sin(va)*vr2]);
+    }
+    particles.push({type:'gib', x:gx, y:gy, r:sz, life:rand(1.6,2.6), t:0,
+      vx:Math.cos(a)*s + ax*s*0.55*(dir||0), vy:Math.sin(a)*s + ay*s*0.55*(dir||0) - 60,
+      rot:(shape === 'head' || shape === 'tail') ? ang + rand(-0.4, 0.4) : rand(0, TAU),
+      vr:rand(-5,5), col, shape, verts});
+  };
+  // 可辨识度核心：鱼头块 + 尾鳍块 + 多块躯干块（交替体色/腹色，断面朝向随机）
+  mkGib(x + ax*r*0.5, y + ay*r*0.5, rHead, pal.body, 'head', 1);
+  mkGib(x - ax*r*0.6, y - ay*r*0.6, rTail, pal.fin, 'tail', -1);
+  for(let i=0;i<n;i++){
+    const t = (i + 0.5) / n - 0.5;   // 沿脊柱均匀分布
+    mkGib(x + ax*t*r*1.1 + qx*rand(-r*0.18, r*0.18),
+          y + ay*t*r*1.1 + qy*rand(-r*0.18, r*0.18),
+          Math.max(10, rBody * rand(0.85, 1.15)),
+          i % 3 === 2 ? pal.belly : pal.body, 'body');
+  }
+  const bn = Math.round(clamp(r * 0.6, 26, 60));
+  for(let i=0;i<bn;i++){
+    const a = rand(0, TAU), s = rand(40, 240) * scale;
+    particles.push({type:'blood', x:x+rand(-r*0.4,r*0.4), y:y+rand(-r*0.4,r*0.4),
+      r:rand(4,12), life:rand(0.9,2.1), t:0, vx:Math.cos(a)*s, vy:Math.sin(a)*s});
+  }
+  particles.push({type:'ring', x, y, r:r*0.7, life:0.85, t:0, color:'rgba(255,70,70,'});
   shakeIt(8 + r * 0.07, 0.45);
 }
-/* ---- 潜艇沉没特效：猛烈爆炸 + 双重冲击环 + 火花 + 金属残骸碎片 + 油污黑烟 + 气泡 + 重震屏 ---- */
+/* ---- 潜艇沉没特效：猛烈爆炸 + 双重冲击环 + 火花 + 金属残骸碎片 + 可辨认的大块艇身残骸 + 油污黑烟 + 气泡 + 重震屏 ---- */
+function subExplode(e){
+  e.dead = true;
+  subWreckFX(e.x, e.y);
+  SFX.explosion();
+  shakeIt(22, 0.7);
+}
 function subWreckFX(x, y){
   sparkFX(x, y);
   particles.push({type:'flash', x, y, r:150, life:0.55, t:0});
   particles.push({type:'ring', x, y, r:60, life:0.9,  t:0, color:'rgba(255,230,150,'});
   particles.push({type:'ring', x, y, r:30, life:1.25, t:0, color:'rgba(255,140,60,'});
+  particles.push({type:'ring', x, y, r:18, life:1.7,  t:0, color:'rgba(90,70,60,'});   // 慢速暗色冲击波
+  // 火球：多团白炽核心快速膨胀为橙红火球再消散
+  for(let i=0;i<5;i++){
+    particles.push({type:'fireball', x:x+rand(-45,45), y:y+rand(-32,32), r:rand(24,44), life:rand(0.5,0.85), t:0,
+      vx:rand(-34,34), vy:rand(-46,12)});
+  }
   const COLS = ['#5a666e','#424c54','#6e7a82','#333b42'];
   for(let i=0;i<26;i++){
     const a = rand(0, TAU), s = rand(90, 430);
     particles.push({type:'rock', x:x+rand(-40,40), y:y+rand(-30,30), r:rand(3,11), life:rand(0.9,1.9), t:0,
       vx:Math.cos(a)*s, vy:Math.sin(a)*s - 40, rot:rand(0,TAU), vr:rand(-8,8), col:COLS[i%4]});
   }
-  for(let i=0;i<9;i++)  particles.push({type:'smoke', x:x+rand(-55,55), y:y+rand(-40,40), r:rand(8,18), life:rand(1.4,2.6), t:0});
-  for(let i=0;i<14;i++) bubbleFX(x+rand(-85,85), y+rand(-55,55), rand(3,9));
+  // 大块艇身残骸：面积守恒——按艇身椭圆截面积（含指挥塔）反推每块碎块尺寸，
+  // 保证所有碎块的渲染面积总和与完整潜艇的艇身面积大致相等
+  const HULL = ['#a83227','#7c211a','#571c16','#8a3230'];
+  const hullA = Math.PI * (r*2.0) * (r*0.7);        // 艇身椭圆截面积
+  const dN = 8, dAspect = 0.5;                       // 8 块，碎块椭圆扁率 0.5
+  const dR = clamp(Math.sqrt(hullA*1.08/dN/(Math.PI*dAspect)), 26, 96);   // +8% 指挥塔等上层结构
+  for(let i=0;i<dN;i++){
+    const a = rand(0, TAU), s = rand(50, 200);
+    particles.push({type:'debris', x:x+rand(-70,70), y:y+rand(-45,45), r:dR*rand(0.85,1.15), life:rand(2.6,3.8), t:0,
+      vx:Math.cos(a)*s, vy:Math.sin(a)*s - 30, rot:rand(0,TAU), vr:rand(-1.8,1.8), col:HULL[i%4], tower:i<2});
+  }
+  for(let i=0;i<16;i++) particles.push({type:'smoke', x:x+rand(-60,60), y:y+rand(-42,42), r:rand(9,22), life:rand(1.6,3.0), t:0});
+  for(let i=0;i<18;i++) bubbleFX(x+rand(-95,95), y+rand(-60,60), rand(3,10));
+  for(let i=0;i<6;i++){   // 爆炸泄漏的油污
+    particles.push({type:'oil', x:x+rand(-50,50), y:y+rand(-35,35), r:rand(6,12), life:rand(2.4,3.6), t:0, vx:rand(-12,12), vy:-rand(8,20)});
+  }
   bloodFX(x, y, 8);
   shakeIt(20, 0.6);
 }
@@ -1431,6 +1660,10 @@ function updateParticles(dt){
     else if(p.type === 'smoke'){ p.x += Math.sin(p.t*2)*8*dt; p.y -= 42*dt; p.r += 9*dt; }
     else if(p.type === 'splash'){ p.x += p.vx*dt; p.y += p.vy*dt; p.vy += 1100*dt; if(p.y > 3) p.t = p.life; }
     else if(p.type === 'rock'){ p.x += p.vx*dt; p.y += p.vy*dt; p.vx *= Math.exp(-1.8*dt); p.vy = p.vy*Math.exp(-1.2*dt) + 260*dt; p.rot += p.vr*dt; }
+    else if(p.type === 'debris'){ p.x += p.vx*dt; p.y += p.vy*dt; p.vx *= Math.exp(-1.6*dt); p.vy = p.vy*Math.exp(-1.6*dt) + 24*dt; p.rot += p.vr*dt; }
+    else if(p.type === 'oil'){ p.x += p.vx*dt; p.y += p.vy*dt; p.vy = Math.max(p.vy - 4*dt, -22); p.r += 11*dt; }
+    else if(p.type === 'fireball'){ p.x += p.vx*dt; p.y += p.vy*dt; p.r += 34*dt; }
+    else if(p.type === 'gib'){ p.x += p.vx*dt; p.y += p.vy*dt; p.vx *= Math.exp(-2.2*dt); p.vy = p.vy*Math.exp(-2.2*dt) + 46*dt; p.rot += p.vr*dt; p.r += 2.5*dt; }
   }
   particles = particles.filter(p => p.t < p.life);
   if(particles.length > 420) particles.splice(0, particles.length - 420);
@@ -1912,15 +2145,15 @@ function drawTurtle(e){
 function drawSeal(e){
   const r = e.r;
   orient(e);
-  const wig = Math.sin(e.phase*3) * 0.1;
+  const wig = Math.sin(e.phase*3) * (e.grabbing ? 0.24 : 0.1);
   ctx.rotate(wig);
-  // 嘴巴：平时保持张开；撕咬时低速张合
+  // 嘴巴：平时保持张开；撕咬时低速张合；撕扯猎物时高速狂咬
   const mo = (e.biteAnim || 0) > 0.01
-    ? 0.24 + 0.26 * Math.abs(Math.sin(tGlobal * 3.2 + (e.id || 0)))
+    ? 0.24 + 0.26 * Math.abs(Math.sin(tGlobal * (e.grabbing ? 6.8 : 3.2) + (e.id || 0)))
     : 0.30;
   // 后尾鳍（水平两叶）
   ctx.save(); ctx.translate(-r*1.15, 0); ctx.rotate(Math.sin(e.phase*2.6)*0.3);
-  ctx.fillStyle = '#7d6a52';
+  ctx.fillStyle = '#aab3ba';
   ctx.beginPath();
   ctx.moveTo(0, 0);
   ctx.lineTo(-r*0.5, -r*0.42); ctx.lineTo(-r*0.18, 0); ctx.lineTo(-r*0.5, r*0.42);
@@ -1928,7 +2161,7 @@ function drawSeal(e){
   ctx.restore();
   // 身体（流线渐变）
   const bg = ctx.createLinearGradient(0, -r*0.5, 0, r*0.5);
-  bg.addColorStop(0, '#9a8570'); bg.addColorStop(0.6, '#b59a7d'); bg.addColorStop(1, '#c9b295');
+  bg.addColorStop(0, '#c6ccd2'); bg.addColorStop(0.6, '#d8dee3'); bg.addColorStop(1, '#edf1f4');
   ctx.fillStyle = bg;
   ctx.beginPath();
   ctx.moveTo(r*1.3, -r*0.05);
@@ -1939,7 +2172,7 @@ function drawSeal(e){
   ctx.quadraticCurveTo(r*0.7, r*0.52, r*1.3, -r*0.05);
   ctx.fill();
   // 皮毛斑点
-  ctx.fillStyle = 'rgba(90,70,50,.28)';
+  ctx.fillStyle = 'rgba(120,132,142,.30)';
   for(let i=0;i<6;i++){
     const h1 = hash((e.id||i*13) + i*7);
     ctx.beginPath();
@@ -1947,7 +2180,7 @@ function drawSeal(e){
     ctx.fill();
   }
   // 前鳍肢
-  ctx.fillStyle = '#8a755c';
+  ctx.fillStyle = '#b3bcc3';
   ctx.save(); ctx.translate(r*0.1, r*0.32); ctx.rotate(0.4 + Math.sin(e.phase*2.4)*0.15);
   ctx.beginPath();
   ctx.moveTo(0,0); ctx.quadraticCurveTo(-r*0.2, r*0.4, -r*0.5, r*0.55);
@@ -1955,7 +2188,7 @@ function drawSeal(e){
   ctx.closePath(); ctx.fill();
   ctx.restore();
   // 头
-  ctx.fillStyle = '#a8906f';
+  ctx.fillStyle = '#ccd4da';
   ctx.beginPath(); ctx.ellipse(r*0.95, -r*0.1, r*0.4, r*0.33, -0.1, 0, TAU); ctx.fill();
   // 张嘴（下颚 + 口腔 + 獠牙）
   const jaw = mo * r * 0.42;
@@ -1967,7 +2200,7 @@ function drawSeal(e){
     ctx.quadraticCurveTo(r*1.0, r*0.16 + jaw, r*1.3, r*0.12 + jaw*0.7);
     ctx.closePath(); ctx.fill();
   }
-  ctx.strokeStyle = 'rgba(60,42,30,.6)';
+  ctx.strokeStyle = 'rgba(105,115,125,.6)';
   ctx.lineWidth = Math.max(1, r*0.04);
   ctx.beginPath();
   ctx.moveTo(r*1.34, r*0.0);
@@ -1983,9 +2216,9 @@ function drawSeal(e){
     ctx.closePath(); ctx.fill();
   }
   // 鼻 + 须
-  ctx.fillStyle = '#3a2d20';
+  ctx.fillStyle = '#4a545c';
   ctx.beginPath(); ctx.arc(r*1.28, -r*0.04, r*0.05, 0, TAU); ctx.fill();
-  ctx.strokeStyle = 'rgba(70,55,40,.55)'; ctx.lineWidth = 1;
+  ctx.strokeStyle = 'rgba(95,105,115,.55)'; ctx.lineWidth = 1;
   for(let i=0;i<4;i++){
     ctx.beginPath();
     ctx.moveTo(r*1.26, r*0.0);
@@ -2272,6 +2505,30 @@ function drawSub(e){
     ctx.stroke();
   }
   ctx.restore();
+  // ---- 受创残躯外观：艇身焦黑覆盖 + 撕裂裂缝 + 两处闪烁火光 ----
+  if(e.wrecked){
+    ctx.fillStyle = 'rgba(30,14,10,.4)';
+    ctx.beginPath(); ctx.ellipse(-r*0.3, r*0.05, r*1.5, r*0.62, 0, 0, TAU); ctx.fill();
+    // 裂缝：三道锯齿状撕裂口
+    ctx.strokeStyle = 'rgba(10,5,4,.75)'; ctx.lineWidth = Math.max(1, r*0.028);
+    for(let i=0;i<3;i++){
+      const cx = r * (-1.2 + hash((e.id||0) + i*17) * 2.4);
+      ctx.beginPath();
+      ctx.moveTo(cx, -r*0.42);
+      ctx.lineTo(cx + r*0.18, -r*0.08);
+      ctx.lineTo(cx - r*0.1, r*0.18);
+      ctx.lineTo(cx + r*0.13, r*0.5);
+      ctx.stroke();
+    }
+    for(let i=0;i<2;i++){
+      const fx = r*(i === 0 ? -0.6 : 0.8), fy = r*(i === 0 ? -0.15 : 0.2);
+      const fl = 0.2 + 0.22 * Math.random();
+      ctx.fillStyle = 'rgba(255,110,40,' + fl + ')';
+      ctx.beginPath(); ctx.arc(fx, fy, r*(0.16 + Math.random()*0.1), 0, TAU); ctx.fill();
+      ctx.fillStyle = 'rgba(255,200,90,' + (fl*0.7) + ')';
+      ctx.beginPath(); ctx.arc(fx, fy, r*0.07, 0, TAU); ctx.fill();
+    }
+  }
   // ---- 艏部红灯 ----
   const bl = 0.5 + 0.5*Math.sin(tGlobal*3 + e.id);
   ctx.fillStyle = 'rgba(255,70,70,' + (0.3 + bl*0.7) + ')';
@@ -2780,6 +3037,120 @@ function render(){
       ctx.lineTo(-p.r*0.7, p.r);
       ctx.closePath();
       ctx.fill();
+      ctx.restore();
+    } else if(p.type === 'debris'){
+      // 潜艇艇身大残骸：猩红椭圆艇体 + 指挥塔（前两块）+ 焦黑断面 + 闪烁余烬
+      ctx.save();
+      ctx.translate(px, py);
+      ctx.rotate(p.rot);
+      ctx.globalAlpha = Math.min(1, k*2.4);
+      ctx.fillStyle = p.col;
+      ctx.beginPath(); ctx.ellipse(0, 0, p.r, p.r*0.42, 0, 0, TAU); ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,0.12)';
+      ctx.beginPath(); ctx.ellipse(0, -p.r*0.16, p.r*0.8, p.r*0.12, 0, 0, TAU); ctx.fill();
+      if(p.tower){
+        ctx.fillStyle = '#701f18';
+        ctx.beginPath();
+        ctx.moveTo(-p.r*0.35, -p.r*0.36);
+        ctx.lineTo(-p.r*0.25, -p.r*0.85);
+        ctx.lineTo(p.r*0.25, -p.r*0.85);
+        ctx.lineTo(p.r*0.38, -p.r*0.36);
+        ctx.closePath(); ctx.fill();
+      }
+      ctx.fillStyle = 'rgba(25,12,10,.55)';
+      ctx.beginPath(); ctx.ellipse(p.r*0.55, 0, p.r*0.3, p.r*0.34, 0, 0, TAU); ctx.fill();
+      // 锈斑与铆接缝：让残骸更像真实艇体碎块
+      ctx.fillStyle = 'rgba(52,30,20,.4)';
+      for(let i=0;i<4;i++){
+        const hx = hash(p.r*13.7 + i) * 1.6 - 0.8, hy = hash(p.r*7.3 + i*3.1) * 0.6 - 0.3;
+        ctx.beginPath(); ctx.arc(hx*p.r, hy*p.r, p.r*(0.08 + hash(i+p.r)*0.09), 0, TAU); ctx.fill();
+      }
+      ctx.strokeStyle = 'rgba(30,14,10,.45)';
+      ctx.lineWidth = Math.max(1, p.r*0.05);
+      ctx.beginPath(); ctx.moveTo(-p.r*0.75, 0); ctx.lineTo(p.r*0.45, 0); ctx.stroke();
+      ctx.fillStyle = 'rgba(255,120,40,' + (0.3*k * (0.5 + 0.5*Math.sin(tGlobal*9 + p.r))) + ')';
+      ctx.beginPath(); ctx.arc(-p.r*0.2, 0, p.r*0.16, 0, TAU); ctx.fill();
+      ctx.restore();
+    } else if(p.type === 'oil'){
+      // 油污：暗黑色不规则晕圈，缓慢上浮扩散
+      ctx.fillStyle = 'rgba(16,18,22,' + (0.34*k) + ')';
+      ctx.beginPath();
+      ctx.ellipse(px, py, p.r*1.25, p.r*0.8, p.t*0.4, 0, TAU);
+      ctx.fill();
+      ctx.fillStyle = 'rgba(8,9,12,' + (0.28*k) + ')';
+      ctx.beginPath();
+      ctx.ellipse(px + p.r*0.3, py - p.r*0.2, p.r*0.6, p.r*0.4, -p.t*0.5, 0, TAU);
+      ctx.fill();
+    } else if(p.type === 'fireball'){
+      // 火球：白炽核心 → 橙红 → 暗红边缘，快速膨胀消散
+      const fr = p.r * (1 + (p.t / p.life) * 1.7);
+      const fg = ctx.createRadialGradient(px, py, 0, px, py, fr);
+      fg.addColorStop(0, 'rgba(255,246,205,' + (0.9*k) + ')');
+      fg.addColorStop(0.42, 'rgba(255,150,58,' + (0.78*k) + ')');
+      fg.addColorStop(0.78, 'rgba(196,60,22,' + (0.4*k) + ')');
+      fg.addColorStop(1, 'rgba(90,22,12,0)');
+      ctx.fillStyle = fg;
+      ctx.beginPath(); ctx.arc(px, py, fr, 0, TAU); ctx.fill();
+    } else if(p.type === 'gib'){
+      ctx.save();
+      ctx.translate(px, py);
+      ctx.rotate(p.rot);
+      ctx.globalAlpha = Math.min(1, k*2.2);
+      if(p.shape === 'head'){
+        // 鱼头块：保留生物体色的吻部楔形 + 眼睛 + 嘴裂獠牙 + 撕裂断面
+        ctx.fillStyle = p.col;
+        ctx.beginPath();
+        ctx.moveTo(p.r*1.25, 0);
+        ctx.quadraticCurveTo(p.r*0.5, -p.r*0.75, -p.r*0.7, -p.r*0.5);
+        ctx.lineTo(-p.r*0.7, p.r*0.5);
+        ctx.quadraticCurveTo(p.r*0.5, p.r*0.75, p.r*1.25, 0);
+        ctx.closePath(); ctx.fill();
+        ctx.fillStyle = 'rgba(150,22,30,.85)';
+        ctx.beginPath(); ctx.ellipse(-p.r*0.6, 0, p.r*0.28, p.r*0.48, 0, 0, TAU); ctx.fill();
+        ctx.fillStyle = '#f2f6f8';
+        ctx.beginPath(); ctx.arc(p.r*0.45, -p.r*0.28, p.r*0.16, 0, TAU); ctx.fill();
+        ctx.fillStyle = '#101418';
+        ctx.beginPath(); ctx.arc(p.r*0.5, -p.r*0.28, p.r*0.08, 0, TAU); ctx.fill();
+        ctx.strokeStyle = 'rgba(30,10,12,.8)'; ctx.lineWidth = Math.max(1, p.r*0.06);
+        ctx.beginPath();
+        ctx.moveTo(p.r*1.1, p.r*0.1);
+        ctx.quadraticCurveTo(p.r*0.4, p.r*0.4, -p.r*0.2, p.r*0.3);
+        ctx.stroke();
+        ctx.fillStyle = '#f5f2ea';
+        for(let i=0;i<3;i++){
+          const tx = p.r*(0.95 - i*0.35);
+          ctx.beginPath();
+          ctx.moveTo(tx, p.r*0.16 + i*p.r*0.05);
+          ctx.lineTo(tx - p.r*0.08, p.r*0.34 + i*p.r*0.05);
+          ctx.lineTo(tx - p.r*0.16, p.r*0.16 + i*p.r*0.05);
+          ctx.closePath(); ctx.fill();
+        }
+      } else if(p.shape === 'tail'){
+        // 尾鳍块：新月双叶尾 + 撕裂断面
+        ctx.fillStyle = p.col;
+        ctx.beginPath();
+        ctx.moveTo(p.r*0.5, 0);
+        ctx.quadraticCurveTo(-p.r*0.6, -p.r*1.15, -p.r*1.15, -p.r*0.95);
+        ctx.quadraticCurveTo(-p.r*0.35, -p.r*0.2, -p.r*0.35, 0);
+        ctx.quadraticCurveTo(-p.r*0.35, p.r*0.2, -p.r*1.0, p.r*0.8);
+        ctx.quadraticCurveTo(-p.r*0.5, p.r*1.05, p.r*0.5, 0);
+        ctx.closePath(); ctx.fill();
+        ctx.fillStyle = 'rgba(150,22,30,.85)';
+        ctx.beginPath(); ctx.ellipse(p.r*0.45, 0, p.r*0.24, p.r*0.4, 0, 0, TAU); ctx.fill();
+      } else {
+        // 躯干块：生物体色的不规则肉块 + 撕裂断面（暗红）与浅色内芯
+        ctx.fillStyle = p.col;
+        ctx.beginPath();
+        for(let i=0;i<p.verts.length;i++){
+          const gx = p.verts[i][0]*p.r, gy = p.verts[i][1]*p.r;
+          i ? ctx.lineTo(gx, gy) : ctx.moveTo(gx, gy);
+        }
+        ctx.closePath(); ctx.fill();
+        ctx.fillStyle = 'rgba(150,22,30,.8)';
+        ctx.beginPath(); ctx.arc(-p.r*0.45, p.r*0.1, p.r*0.5, 0, TAU); ctx.fill();
+        ctx.fillStyle = 'rgba(232,150,158,.45)';
+        ctx.beginPath(); ctx.arc(-p.r*0.45, p.r*0.1, p.r*0.26, 0, TAU); ctx.fill();
+      }
       ctx.restore();
     }
   }
