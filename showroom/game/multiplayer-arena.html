@@ -2359,6 +2359,17 @@
             }
         });
 
+        // 进入页面就连接大厅，让开始界面直接看到在线房间
+        initSupabase().then(function (ok) {
+            if (ok) {
+                joinLobby();
+            } else {
+                const st = document.getElementById('join-status');
+                st.textContent = '⚠️ 房间列表不可用，请检查网络';
+                st.className = 'status err';
+            }
+        });
+
         resize();
         requestAnimationFrame(loop);
     </script>
