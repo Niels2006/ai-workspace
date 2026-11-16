@@ -1183,8 +1183,8 @@
         function applyMap(mapId) {
             currentMapId = MAPS[mapId] ? mapId : 'classroom';
             currentMap = MAPS[currentMapId];
-            WORLD_W = currentMap.w;
-            WORLD_H = currentMap.h;
+            WORLD_W = currentMap.w || 1600;
+            WORLD_H = currentMap.h || 1200;
             OBSTACLES = currentMap.obstacles;
             SPAWNS = currentMap.spawns;
         }
