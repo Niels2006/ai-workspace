@@ -1150,6 +1150,8 @@
             return [...rooms.values()].sort((a, b) => b.players.length - a.players.length);
         }
 
+        let lastRoomSig = '';
+
         function renderRoomList() {
             const listEl = document.getElementById('room-list');
             if (!listEl) return;
@@ -1157,6 +1159,12 @@
             const online = lobbyPeers.size + (lobbyReady ? 1 : 0);
             const countEl = document.getElementById('lobby-count');
             if (countEl) countEl.textContent = `大厅 ${online} 人`;
+
+            const sig = online + '|' + rooms.map(r =>
+                r.code + ':' + r.map + ':' + r.players.join(',')
+            ).join('|');
+            if (sig === lastRoomSig) return;   // 内容未变时不重建，避免打断点击
+            lastRoomSig = sig;
 
             if (!rooms.length) {
                 listEl.innerHTML = '<div class="room-empty">暂无房间，直接进入即可创建新房间</div>';
