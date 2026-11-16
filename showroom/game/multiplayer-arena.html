@@ -573,13 +573,6 @@
             color: var(--ink);
         }
 
-        .room-panel {
-            margin-top: 14px;
-            border-top: 1px solid rgba(255, 255, 255, .1);
-            padding-top: 10px;
-            text-align: left;
-        }
-
         .room-panel-title {
             font-size: .7rem;
             color: var(--muted);
@@ -631,6 +624,68 @@
             font-size: .7rem;
             color: var(--muted);
             padding: 6px 2px;
+        }
+
+        .screen.hidden {
+            display: none;
+        }
+
+        .menu-btn {
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .menu-btn.ghost {
+            background: rgba(255, 255, 255, .06);
+            color: var(--ink);
+            border: 1px solid rgba(255, 255, 255, .18);
+        }
+
+        .join-card .back-btn {
+            margin-top: 12px;
+            width: 100%;
+            padding: 8px;
+            border-radius: 8px;
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, .16);
+            color: var(--muted);
+            font-size: .78rem;
+            cursor: pointer;
+        }
+
+        .back-btn:hover {
+            color: var(--ink);
+            border-color: rgba(255, 255, 255, .3);
+        }
+
+        .search-row {
+            display: flex;
+            gap: 8px;
+        }
+
+        .search-row input {
+            margin: 0;
+            flex: 1;
+            text-transform: uppercase;
+            letter-spacing: .24em;
+            text-align: center;
+            font-family: var(--mono);
+        }
+
+        .join-card .mini-btn {
+            padding: 0 16px;
+            border-radius: 8px;
+            border: 1px solid rgba(79, 109, 245, .6);
+            background: rgba(79, 109, 245, .2);
+            color: var(--ink);
+            font-size: .78rem;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .room-item.playing {
+            border-color: var(--accent2);
+            background: rgba(34, 184, 166, .12);
         }
 
         #room-badge {
@@ -806,26 +861,44 @@
             <div class="join-card">
                 <h1>教室大乱斗</h1>
                 <div class="subtitle">MULTI-MAP BRAWL · ONLINE</div>
-                <input type="text" id="player-name" maxlength="12" placeholder="输入你的昵称">
-                <div class="field-label">房间号（留空则自动创建新房间）</div>
-                <input type="text" id="room-code" maxlength="4" placeholder="如 A7K2">
-                <div class="field-label">新房间地图</div>
-                <div class="map-pick" id="map-pick"></div>
-                <button id="join-btn">进入房间 ENTER</button>
-                <div class="status" id="join-status"></div>
-                <div class="room-panel">
-                    <div class="room-panel-title">
-                        <span>在线房间与玩家</span>
+
+                <div class="screen" id="screen-home">
+                    <div class="field-label">你的昵称</div>
+                    <input type="text" id="player-name" maxlength="12" placeholder="输入你的昵称">
+                    <button id="go-join" class="menu-btn">进入房间</button>
+                    <button id="go-create" class="menu-btn ghost">创建房间</button>
+                    <div class="status" id="join-status"></div>
+                    <div class="hint">
+                        WASD / 方向键 移动<br>
+                        鼠标瞄准 · 左键 / 空格 射击
+                    </div>
+                </div>
+
+                <div class="screen hidden" id="screen-join">
+                    <div class="field-label">按房间号搜索</div>
+                    <div class="search-row">
+                        <input type="text" id="search-code" maxlength="4" placeholder="房间号">
+                        <button id="search-btn" class="mini-btn">搜索</button>
+                    </div>
+                    <div class="room-panel-title" style="margin-top:14px">
+                        <span>正在运行的房间</span>
                         <span id="lobby-count">大厅 0 人</span>
                     </div>
                     <div class="room-list" id="room-list">
                         <div class="room-empty">正在获取房间列表...</div>
                     </div>
+                    <div class="status" id="search-status"></div>
+                    <button class="back-btn" data-back="home">返回</button>
                 </div>
-                <div class="hint">
-                    WASD / 方向键 移动<br>
-                    鼠标瞄准 · 左键 / 空格 射击<br>
-                    点击上方房间可直接进入同一张地图
+
+                <div class="screen hidden" id="screen-create">
+                    <div class="field-label">选择地图</div>
+                    <div class="map-pick" id="map-pick"></div>
+                    <div class="field-label">房间号（留空则自动生成）</div>
+                    <input type="text" id="room-code" maxlength="4" placeholder="如 A7K2">
+                    <button id="create-btn">创建并进入</button>
+                    <div class="status" id="create-status"></div>
+                    <button class="back-btn" data-back="home">返回</button>
                 </div>
             </div>
         </div>
@@ -1182,8 +1255,7 @@
 
             listEl.querySelectorAll('.room-item').forEach(el => {
                 el.addEventListener('click', () => {
-                    document.getElementById('room-code').value = el.dataset.room;
-                    selectMap(el.dataset.map);
+                    enterRoom(el.dataset.room, el.dataset.map);
                 });
             });
         }
@@ -2277,41 +2349,99 @@
         });
         selectMap(selectedMapId);
 
+        function showScreen(name) {
+            for (const id of ['home', 'join', 'create']) {
+                document.getElementById('screen-' + id).classList.toggle('hidden', id !== name);
+            }
+            if (name === 'join') renderRoomList();
+        }
+
+        function readName() {
+            const name = document.getElementById('player-name').value.trim() || 'Player';
+            me.name = name;
+            localStorage.setItem('player_name', name);
+            return name;
+        }
+
+        function setStatus(id, text, isErr) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.textContent = text;
+            el.className = 'status' + (isErr ? ' err' : '');
+        }
+
+        function readCode(inputId) {
+            return (document.getElementById(inputId).value || '')
+                .trim().toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 4);
+        }
+
+        function enterRoom(code, mapId) {
+            readName();
+            setStatus('search-status', '连接中...');
+            initSupabase().then(function (ok) {
+                if (!ok) {
+                    setStatus('search-status', '❌ 连接失败，请稍后重试', true);
+                    return null;
+                }
+                return joinLobby();
+            }).then(function (ready) {
+                if (ready === null) return;
+                setStatus('search-status', '');
+                joinRoom(code, mapId || selectedMapId);
+            });
+        }
+
+        document.getElementById('go-join').addEventListener('click', () => {
+            readName();
+            setStatus('search-status', '');
+            showScreen('join');
+        });
+
+        document.getElementById('go-create').addEventListener('click', () => {
+            readName();
+            setStatus('create-status', '');
+            showScreen('create');
+        });
+
+        document.querySelectorAll('.back-btn').forEach(btn => {
+            btn.addEventListener('click', () => showScreen(btn.dataset.back));
+        });
+
+        document.getElementById('search-btn').addEventListener('click', () => {
+            const code = readCode('search-code');
+            if (!code) {
+                setStatus('search-status', '请输入房间号', true);
+                return;
+            }
+            const room = collectRooms().find(r => r.code === code);
+            if (!room) {
+                setStatus('search-status', `房间 ${code} 不存在或已关闭`, true);
+                return;
+            }
+            enterRoom(room.code, room.map);
+        });
+
+        document.getElementById('search-code').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') document.getElementById('search-btn').click();
+        });
+
+        document.getElementById('create-btn').addEventListener('click', () => {
+            const code = readCode('room-code') || makeRoomCode();
+            const existing = collectRooms().find(r => r.code === code);
+            if (existing) {
+                setStatus('create-status', `房间 ${code} 已存在，将加入该房间`, false);
+                enterRoom(existing.code, existing.map);
+                return;
+            }
+            enterRoom(code, selectedMapId);
+        });
+
         function updateRoomInfo() {
             const info = document.getElementById('room-info');
             if (info) info.textContent = `房间 ${roomCode || '----'} · ${currentMap.name}`;
             const badge = document.getElementById('room-badge');
             if (badge) badge.textContent = `房间 ${roomCode || '----'} · ${currentMap.name} · 换房`;
         }
-
-        document.getElementById('join-btn').addEventListener('click', () => {
-            const name = document.getElementById('player-name').value.trim() || 'Player';
-            me.name = name;
-            localStorage.setItem('player_name', name);
-
-            const statusEl = document.getElementById('join-status');
-            statusEl.textContent = '连接中...';
-            statusEl.className = 'status';
-
-            initSupabase().then(function (ok) {
-                if (!ok) {
-                    statusEl.textContent = '❌ Supabase 连接失败，请稍后重试';
-                    statusEl.className = 'status err';
-                    return null;
-                }
-                return joinLobby();
-            }).then(function (ready) {
-                if (ready === null) return;
-                const raw = (document.getElementById('room-code').value || '')
-                    .trim().toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 4);
-                const code = raw || makeRoomCode();
-                let mapId = selectedMapId;
-                const existing = collectRooms().find(r => r.code === code);
-                if (existing && existing.map) mapId = existing.map;
-                statusEl.textContent = '';
-                joinRoom(code, mapId);
-            });
-        });
 
         function startGame() {
             joinOverlay.classList.add('hidden');
@@ -2345,6 +2475,7 @@
             document.getElementById('room-badge').style.display = 'none';
             document.getElementById('join-status').textContent = '';
             joinOverlay.classList.remove('hidden');
+            showScreen('home');
             announceLobby();
             renderRoomList();
         }
