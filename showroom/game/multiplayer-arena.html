@@ -1706,8 +1706,7 @@
             me.x = link.tx;
             me.y = link.ty;
             me.linkCooldown = performance.now() + 900;
-            camera.x = Math.max(0, Math.min(WORLD_W - VIEW_W, me.x - VIEW_W / 2));
-            camera.y = Math.max(0, Math.min(WORLD_H - VIEW_H, me.y - VIEW_H / 2));
+            updateCamera();
             updateRoomInfo();
             showToast(`到达 ${currentMap.name} ${FLOOR + 1}F`);
             broadcastState();
