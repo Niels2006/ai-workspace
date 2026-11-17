@@ -952,78 +952,164 @@
 
         const MAPS = {
             classroom: {
-                id: 'classroom', name: '教室', ground: 'wood',
-                obstacles: [
-                    [690, 140, 220, 90, 'podium'],
-                    [1500, 300, 78, 260, 'shelf'],
-                    [1500, 700, 78, 260, 'shelf'],
-                    ...buildGrid(130, 400, 5, 4, 170, 80, 280, 180, 'desk'),
-                ],
-                spawns: [
-                    [700, 320], [1000, 320], [70, 900], [1460, 900],
-                    [360, 1130], [700, 1130], [1030, 1130], [1460, 1130],
-                ],
+                id: 'classroom', name: '教室', w: 1600, h: 1200,
+                floors: [{
+                    ground: 'wood',
+                    obstacles: [
+                        [690, 140, 220, 90, 'podium'],
+                        [1500, 300, 78, 260, 'shelf'],
+                        [1500, 700, 78, 260, 'shelf'],
+                        ...buildGrid(130, 400, 5, 4, 170, 80, 280, 180, 'desk'),
+                    ],
+                    spawns: [
+                        [700, 320], [1000, 320], [70, 900], [1460, 900],
+                        [360, 1130], [700, 1130], [1030, 1130], [1460, 1130],
+                    ],
+                }],
             },
+
             library: {
-                id: 'library', name: '图书馆', ground: 'carpet',
-                obstacles: [
-                    ...buildGrid(150, 180, 3, 2, 110, 400, 490, 500, 'shelf'),
-                    ...buildGrid(330, 280, 3, 2, 240, 110, 490, 500, 'table'),
-                    [40, 40, 76, 76, 'plant'],
-                    [1484, 40, 76, 76, 'plant'],
-                    [40, 1084, 76, 76, 'plant'],
-                    [1484, 1084, 76, 76, 'plant'],
-                ],
-                spawns: [
-                    [80, 630], [560, 630], [1060, 630], [1540, 630],
-                    [300, 1100], [600, 1100], [1080, 1100], [1420, 1100],
+                id: 'library', name: '图书馆', w: 1600, h: 1200,
+                floors: [
+                    {   // 1F
+                        ground: 'carpet',
+                        obstacles: [
+                            ...buildGrid(150, 180, 3, 2, 110, 400, 490, 500, 'shelf'),
+                            ...buildGrid(330, 280, 3, 2, 240, 110, 490, 500, 'table'),
+                            [40, 40, 76, 76, 'plant'],
+                            [40, 1084, 76, 76, 'plant'],
+                        ],
+                        spawns: [
+                            [80, 630], [560, 630], [1060, 630], [1540, 630],
+                            [300, 1100], [600, 1100], [1080, 1100], [1420, 1100],
+                        ],
+                        links: [
+                            { x: 1300, y: 950, w: 180, h: 180, to: 1, tx: 1390, ty: 920, type: 'stairs', label: '楼梯 2F' },
+                        ],
+                    },
+                    {   // 2F
+                        ground: 'carpet',
+                        obstacles: [
+                            [120, 100, 90, 420, 'shelf'],
+                            [1380, 100, 90, 420, 'shelf'],
+                            ...buildGrid(180, 240, 3, 2, 200, 110, 480, 300, 'table'),
+                            [40, 1084, 76, 76, 'plant'],
+                            [1484, 1084, 76, 76, 'plant'],
+                        ],
+                        spawns: [
+                            [300, 800], [700, 800], [1000, 800], [500, 950],
+                            [900, 950], [1200, 200], [300, 200], [700, 200],
+                        ],
+                        links: [
+                            { x: 1300, y: 950, w: 180, h: 180, to: 0, tx: 1390, ty: 920, type: 'stairs', label: '楼梯 1F' },
+                        ],
+                    },
                 ],
             },
+
             dorm: {
-                id: 'dorm', name: '宿舍', ground: 'tile',
-                obstacles: [
-                    ...buildGrid(120, 180, 1, 4, 200, 110, 0, 220, 'bed'),
-                    ...buildGrid(1280, 180, 1, 4, 200, 110, 0, 220, 'bed'),
-                    ...buildGrid(420, 40, 3, 1, 120, 80, 290, 0, 'wardrobe'),
-                    [600, 560, 150, 80, 'desk'],
-                    [850, 560, 150, 80, 'desk'],
-                    [40, 1090, 76, 76, 'plant'],
-                    [1484, 1090, 76, 76, 'plant'],
-                ],
-                spawns: [
-                    [760, 300], [1000, 300], [760, 760], [1000, 760],
-                    [500, 1050], [700, 1050], [900, 1050], [1100, 1050],
-                ],
+                id: 'dorm', name: '宿舍', w: 1600, h: 1200,
+                floors: [{
+                    ground: 'tile',
+                    obstacles: [
+                        // 走廊上方两间宿舍
+                        [60, 60, 680, 24, 'wall'],
+                        [60, 60, 24, 440, 'wall'],
+                        [60, 476, 280, 24, 'wall'],
+                        [460, 476, 280, 24, 'wall'],
+                        [716, 60, 144, 440, 'wall'],
+                        [860, 60, 680, 24, 'wall'],
+                        [1516, 60, 24, 440, 'wall'],
+                        [860, 476, 280, 24, 'wall'],
+                        [1260, 476, 280, 24, 'wall'],
+                        // 走廊下方两间宿舍
+                        [60, 700, 280, 24, 'wall'],
+                        [460, 700, 280, 24, 'wall'],
+                        [60, 700, 24, 440, 'wall'],
+                        [60, 1116, 680, 24, 'wall'],
+                        [716, 700, 144, 440, 'wall'],
+                        [860, 700, 280, 24, 'wall'],
+                        [1260, 700, 280, 24, 'wall'],
+                        [1516, 700, 24, 440, 'wall'],
+                        [860, 1116, 680, 24, 'wall'],
+                        // 家具
+                        [100, 150, 150, 80, 'desk'],
+                        [420, 150, 200, 110, 'bed'],
+                        [80, 380, 70, 70, 'plant'],
+                        [1080, 150, 200, 110, 'bed'],
+                        [1300, 150, 150, 80, 'desk'],
+                        [1430, 380, 70, 70, 'plant'],
+                        [100, 850, 150, 80, 'desk'],
+                        [420, 850, 200, 110, 'bed'],
+                        [80, 1000, 70, 70, 'plant'],
+                        [1080, 850, 200, 110, 'bed'],
+                        [1300, 850, 150, 80, 'desk'],
+                        [1430, 1000, 70, 70, 'plant'],
+                    ],
+                    spawns: [
+                        [200, 600], [800, 600], [1400, 600], [1000, 600],
+                        [500, 300], [1100, 300], [400, 1000], [1200, 1000],
+                    ],
+                }],
             },
+
             lab: {
-                id: 'lab', name: '实验室', ground: 'lab',
-                obstacles: [
-                    ...buildGrid(200, 260, 1, 4, 380, 90, 0, 200, 'bench'),
-                    ...buildGrid(1020, 260, 1, 4, 380, 90, 0, 200, 'bench'),
-                    [700, 80, 200, 90, 'hood'],
-                    [40, 300, 80, 300, 'shelf'],
-                    [1480, 620, 80, 300, 'shelf'],
-                ],
-                spawns: [
-                    [800, 260], [800, 460], [800, 660], [800, 860],
-                    [100, 900], [400, 1050], [1000, 1050], [1500, 150],
-                ],
+                id: 'lab', name: '实验室', w: 1600, h: 1200,
+                floors: [{
+                    ground: 'lab',
+                    obstacles: [
+                        ...buildGrid(200, 260, 1, 4, 380, 90, 0, 200, 'bench'),
+                        ...buildGrid(1020, 260, 1, 4, 380, 90, 0, 200, 'bench'),
+                        [700, 80, 200, 90, 'hood'],
+                        [40, 300, 80, 300, 'shelf'],
+                        [1480, 620, 80, 300, 'shelf'],
+                    ],
+                    spawns: [
+                        [800, 260], [800, 460], [800, 660], [800, 860],
+                        [100, 900], [400, 1050], [1000, 1050], [1500, 150],
+                    ],
+                }],
             },
+
             gym: {
-                id: 'gym', name: '体育馆', ground: 'court',
-                obstacles: [
-                    [100, 40, 600, 90, 'bleacher'],
-                    [900, 40, 600, 90, 'bleacher'],
-                    [100, 1070, 600, 90, 'bleacher'],
-                    [900, 1070, 600, 90, 'bleacher'],
-                    [60, 400, 90, 90, 'crate'],
-                    [60, 700, 90, 90, 'crate'],
-                    [1450, 400, 90, 90, 'crate'],
-                    [1450, 700, 90, 90, 'crate'],
-                ],
-                spawns: [
-                    [400, 200], [1200, 200], [400, 990], [1200, 990],
-                    [250, 600], [1350, 600], [800, 250], [800, 950],
+                id: 'gym', name: '体育馆', w: 1600, h: 1200,
+                floors: [
+                    {   // 1F 球场
+                        ground: 'court',
+                        obstacles: [
+                            [100, 40, 600, 90, 'bleacher'],
+                            [900, 40, 600, 90, 'bleacher'],
+                            [100, 1070, 600, 90, 'bleacher'],
+                            [900, 1070, 600, 90, 'bleacher'],
+                            [60, 400, 90, 90, 'crate'],
+                            [60, 700, 90, 90, 'crate'],
+                            [1450, 400, 90, 90, 'crate'],
+                            [1450, 700, 90, 90, 'crate'],
+                        ],
+                        spawns: [
+                            [400, 200], [1200, 200], [400, 990], [1200, 990],
+                            [250, 600], [1350, 600], [800, 250], [800, 950],
+                        ],
+                        links: [
+                            { x: 710, y: 1050, w: 180, h: 120, to: 1, tx: 800, ty: 990, type: 'escalator', label: '扶梯 2F' },
+                        ],
+                    },
+                    {   // 2F 看台与健身区
+                        ground: 'court',
+                        obstacles: [
+                            [100, 40, 1400, 90, 'bleacher'],
+                            ...buildGrid(180, 300, 3, 2, 90, 90, 560, 400, 'crate'),
+                            [40, 1084, 76, 76, 'plant'],
+                            [1484, 1084, 76, 76, 'plant'],
+                        ],
+                        spawns: [
+                            [400, 200], [1200, 200], [400, 950], [1200, 950],
+                            [800, 220], [800, 900], [250, 550], [1350, 550],
+                        ],
+                        links: [
+                            { x: 710, y: 1050, w: 180, h: 120, to: 0, tx: 800, ty: 990, type: 'escalator', label: '扶梯 1F' },
+                        ],
+                    },
                 ],
             },
         };
@@ -1053,11 +1139,17 @@
             bleacher: '#7f8c99',
             crate: '#a97c4d',
             plant: '#4b8b54',
+            wall: '#6b5b4a',
         };
 
         let currentMap = MAPS.classroom;
-        let OBSTACLES = currentMap.obstacles;
-        let SPAWNS = currentMap.spawns;
+        let FLOOR = 0;
+        let OBSTACLES = [];
+        let SPAWNS = [];
+
+        function floorDef() {
+            return currentMap.floors[FLOOR];
+        }
 
         // ============================================================
         //  STATE
@@ -1091,7 +1183,9 @@
             alive: true,
             lastFire: 0,
             respawnAt: 0,
-            spawnIdx: 0
+            spawnIdx: 0,
+            floor: 0,
+            linkCooldown: 0
         };
 
         const remotePlayers = new Map();
@@ -1266,13 +1360,22 @@
             });
         }
 
+        function applyFloor(idx) {
+            const floors = currentMap.floors;
+            FLOOR = Math.max(0, Math.min(floors.length - 1, idx));
+            const f = floors[FLOOR];
+            OBSTACLES = f.obstacles;
+            SPAWNS = f.spawns;
+            me.floor = FLOOR;
+        }
+
         function applyMap(mapId) {
             currentMapId = MAPS[mapId] ? mapId : 'classroom';
             currentMap = MAPS[currentMapId];
             WORLD_W = currentMap.w || 1600;
             WORLD_H = currentMap.h || 1200;
-            OBSTACLES = currentMap.obstacles;
-            SPAWNS = currentMap.spawns;
+            FLOOR = 0;
+            applyFloor(0);
         }
 
         function joinRoom(code, mapId) {
@@ -1314,6 +1417,7 @@
                         x: payload.x, y: payload.y, angle: payload.angle,
                         targetX: payload.x, targetY: payload.y, targetAngle: payload.angle,
                         health: payload.health, score: payload.score, alive: payload.alive,
+                        floor: payload.floor || 0,
                         lastSeen: performance.now()
                     });
                     showToast(`${payload.name} 进入${currentMap.name}`);
@@ -1327,6 +1431,7 @@
                     rp.health = payload.health;
                     rp.score = payload.score;
                     rp.alive = payload.alive;
+                    rp.floor = payload.floor || 0;
                     rp.lastSeen = performance.now();
                 }
             });
@@ -1344,7 +1449,7 @@
 
             channel.on('broadcast', { event: 'shoot' }, ({ payload }) => {
                 if (payload.ownerId === me.id) return;
-                spawnBullet(payload.x, payload.y, payload.angle, payload.ownerId, payload.ownerColor, false);
+                spawnBullet(payload.x, payload.y, payload.angle, payload.ownerId, payload.ownerColor, false, payload.floor || 0);
             });
 
             channel.on('broadcast', { event: 'hit' }, ({ payload }) => {
@@ -1433,7 +1538,8 @@
                     angle: +me.angle.toFixed(3),
                     health: me.health,
                     score: me.score,
-                    alive: me.alive
+                    alive: me.alive,
+                    floor: me.floor
                 }
             });
         }
@@ -1442,7 +1548,7 @@
             if (!channel) return;
             channel.send({
                 type: 'broadcast', event: 'shoot',
-                payload: { x, y, angle, ownerId: me.id, ownerColor: me.color }
+                payload: { x, y, angle, ownerId: me.id, ownerColor: me.color, floor: me.floor }
             });
         }
 
@@ -1493,7 +1599,7 @@
             updateCamera();
         }
 
-        function spawnBullet(x, y, angle, ownerId, ownerColor, isLocal) {
+        function spawnBullet(x, y, angle, ownerId, ownerColor, isLocal, floor) {
             bullets.push({
                 x: x + Math.cos(angle) * (PLAYER_RADIUS + 4),
                 y: y + Math.sin(angle) * (PLAYER_RADIUS + 4),
@@ -1501,7 +1607,8 @@
                 vy: Math.sin(angle) * BULLET_SPEED,
                 ownerId, ownerColor,
                 life: 1.5,
-                isLocal
+                isLocal,
+                floor: floor || 0
             });
         }
 
@@ -1510,7 +1617,7 @@
             if (!me.alive) return;
             if (now - me.lastFire < FIRE_COOLDOWN) return;
             me.lastFire = now;
-            spawnBullet(me.x, me.y, me.angle, me.id, me.color, true);
+            spawnBullet(me.x, me.y, me.angle, me.id, me.color, true, me.floor);
             broadcastShoot(me.x, me.y, me.angle);
         }
 
@@ -1572,11 +1679,39 @@
             // World bounds
             me.x = Math.max(PLAYER_RADIUS, Math.min(WORLD_W - PLAYER_RADIUS, me.x));
             me.y = Math.max(PLAYER_RADIUS, Math.min(WORLD_H - PLAYER_RADIUS, me.y));
+            checkFloorLinks();
             updateCamera();
 
             me.angle = Math.atan2(mouse.y - me.y, mouse.x - me.x);
 
             if (mouse.down) fire();
+        }
+
+        function checkFloorLinks() {
+            const now = performance.now();
+            if (now < me.linkCooldown) return;
+            const f = floorDef();
+            if (!f.links) return;
+            for (const link of f.links) {
+                if (me.x > link.x && me.x < link.x + link.w &&
+                    me.y > link.y && me.y < link.y + link.h) {
+                    useLink(link);
+                    return;
+                }
+            }
+        }
+
+        function useLink(link) {
+            applyFloor(link.to);
+            me.x = link.tx;
+            me.y = link.ty;
+            me.linkCooldown = performance.now() + 900;
+            camera.x = Math.max(0, Math.min(WORLD_W - VIEW_W, me.x - VIEW_W / 2));
+            camera.y = Math.max(0, Math.min(WORLD_H - VIEW_H, me.y - VIEW_H / 2));
+            updateRoomInfo();
+            showToast(`到达 ${currentMap.name} ${FLOOR + 1}F`);
+            broadcastState();
+            lastSync = performance.now();
         }
 
         function updateRemotePlayers(dt) {
@@ -1623,6 +1758,7 @@
                     let hit = false;
                     for (const [pid, rp] of remotePlayers) {
                         if (!rp.alive) continue;
+                        if ((rp.floor || 0) !== b.floor) continue;
                         const d = Math.hypot(b.x - rp.x, b.y - rp.y);
                         if (d < PLAYER_RADIUS + BULLET_RADIUS) {
                             broadcastHit(me.id, pid, me.name);
@@ -1635,7 +1771,7 @@
                 }
 
                 // Remote bullet vs local player
-                if (!b.isLocal && me.alive) {
+                if (!b.isLocal && me.alive && b.floor === me.floor) {
                     const d = Math.hypot(b.x - me.x, b.y - me.y);
                     if (d < PLAYER_RADIUS + BULLET_RADIUS) {
                         const owner = remotePlayers.get(b.ownerId);
@@ -1671,11 +1807,13 @@
             ctx.translate(-camera.x, -camera.y);
 
             drawGround();
+            drawLinks();
             drawObstacles();
             drawBullets();
             drawParticles();
 
             for (const [pid, rp] of remotePlayers) {
+                if ((rp.floor || 0) !== me.floor) continue;
                 if (isVisible(rp.x - PLAYER_RADIUS, rp.y - PLAYER_RADIUS, PLAYER_RADIUS * 2, PLAYER_RADIUS * 2)) {
                     drawPlayer(rp, false);
                 }
@@ -1702,7 +1840,7 @@
             const right = Math.min(WORLD_W, camera.x + VIEW_W);
             const bottom = Math.min(WORLD_H, camera.y + VIEW_H);
             const w = right - left, h = bottom - top;
-            const kind = currentMap.ground;
+            const kind = floorDef().ground;
 
             if (kind === 'wood') ctx.fillStyle = '#c9a273';
             else if (kind === 'carpet') ctx.fillStyle = '#2f3a4d';
@@ -1817,16 +1955,24 @@
                 ctx.fillStyle = 'rgba(230,235,240,0.22)';
                 ctx.fillText('保持安静，子弹除外', WORLD_W / 2, WORLD_H / 2 + 46);
             } else if (kind === 'tile') {
-                ctx.fillStyle = 'rgba(90,70,50,0.18)';
-                ctx.fillRect(700, 240, 200, 700);
-                ctx.fillStyle = 'rgba(90,70,50,0.3)';
-                ctx.font = 'bold 22px sans-serif';
-                ctx.fillText('宿 舍', WORLD_W / 2, 300);
-                ctx.fillStyle = '#8fb6c9';
-                ctx.fillRect(WORLD_W - 34, 300, 22, 600);
-                ctx.strokeStyle = '#eef4f8';
+                // 宿舍走廊（y 500~700）
+                ctx.fillStyle = 'rgba(150,120,88,0.22)';
+                ctx.fillRect(0, 500, WORLD_W, 200);
+                ctx.strokeStyle = 'rgba(120,95,68,0.35)';
                 ctx.lineWidth = 3;
-                ctx.strokeRect(WORLD_W - 32.5, 301.5, 19, 597);
+                ctx.beginPath();
+                ctx.moveTo(0, 500); ctx.lineTo(WORLD_W, 500);
+                ctx.moveTo(0, 700); ctx.lineTo(WORLD_W, 700);
+                ctx.stroke();
+                ctx.fillStyle = 'rgba(90,70,50,0.42)';
+                ctx.font = 'bold 20px sans-serif';
+                ctx.fillText('宿 舍 走 廊', WORLD_W / 2, 600);
+                ctx.font = 'bold 18px sans-serif';
+                ctx.fillStyle = 'rgba(90,70,50,0.3)';
+                ctx.fillText('寝室 201', 400, 458);
+                ctx.fillText('寝室 202', 1200, 458);
+                ctx.fillText('寝室 203', 400, 742);
+                ctx.fillText('寝室 204', 1200, 742);
             } else if (kind === 'lab') {
                 ctx.fillStyle = 'rgba(90,150,190,0.12)';
                 ctx.fillRect(620, 180, 360, 800);
@@ -1846,6 +1992,54 @@
                 ctx.lineWidth = 4;
                 ctx.beginPath(); ctx.arc(WORLD_W / 2, 180, 90, 0, Math.PI); ctx.stroke();
                 ctx.beginPath(); ctx.arc(WORLD_W / 2, WORLD_H - 180, 90, Math.PI, Math.PI * 2); ctx.stroke();
+            }
+        }
+
+        function drawLinks() {
+            const f = floorDef();
+            if (!f.links) return;
+            for (const l of f.links) {
+                if (!isVisible(l.x, l.y, l.w, l.h, 40)) continue;
+                ctx.save();
+                if (l.type === 'stairs') {
+                    ctx.fillStyle = '#8a6a4a';
+                    ctx.fillRect(l.x, l.y, l.w, l.h);
+                    ctx.strokeStyle = '#d8c3a5';
+                    ctx.lineWidth = 2;
+                    const steps = 6;
+                    for (let i = 1; i < steps; i++) {
+                        const yy = l.y + (l.h / steps) * i;
+                        ctx.beginPath(); ctx.moveTo(l.x + 4, yy); ctx.lineTo(l.x + l.w - 4, yy); ctx.stroke();
+                    }
+                } else if (l.type === 'escalator') {
+                    ctx.fillStyle = '#4a5560';
+                    ctx.fillRect(l.x, l.y, l.w, l.h);
+                    ctx.strokeStyle = 'rgba(255,220,120,0.75)';
+                    ctx.lineWidth = 6;
+                    for (let i = 0; i < 5; i++) {
+                        const xx = l.x + 20 + i * 32;
+                        ctx.beginPath(); ctx.moveTo(xx, l.y + l.h - 10); ctx.lineTo(xx + 22, l.y + 10); ctx.stroke();
+                    }
+                } else {
+                    ctx.fillStyle = '#5c6b78';
+                    ctx.fillRect(l.x, l.y, l.w, l.h);
+                    ctx.strokeStyle = '#cfd9e0';
+                    ctx.lineWidth = 3;
+                    ctx.strokeRect(l.x + 3, l.y + 3, l.w - 6, l.h - 6);
+                    ctx.beginPath();
+                    ctx.moveTo(l.x + l.w / 2, l.y + 6); ctx.lineTo(l.x + l.w / 2, l.y + l.h - 6);
+                    ctx.stroke();
+                }
+                const text = l.label || (l.type === 'stairs' ? '楼梯' : l.type === 'escalator' ? '扶梯' : '电梯');
+                ctx.font = 'bold 14px sans-serif';
+                const tw = ctx.measureText(text).width + 16;
+                ctx.fillStyle = 'rgba(10,16,22,0.75)';
+                ctx.fillRect(l.x + l.w / 2 - tw / 2, l.y + l.h / 2 - 12, tw, 24);
+                ctx.fillStyle = '#f4efe3';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(text, l.x + l.w / 2, l.y + l.h / 2 + 1);
+                ctx.restore();
             }
         }
 
@@ -2025,6 +2219,15 @@
                     continue;
                 }
 
+                if (type === 'wall') {
+                    ctx.fillStyle = '#6b5b4a';
+                    ctx.fillRect(x, y, w, h);
+                    ctx.strokeStyle = 'rgba(38,28,20,0.65)';
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(x + 1, y + 1, w - 2, h - 2);
+                    continue;
+                }
+
                 // 讲台
                 ctx.fillStyle = 'rgba(90,60,32,0.24)';
                 ctx.fillRect(x + 6, y + 8, w, h);
@@ -2060,11 +2263,19 @@
                 ctx.fillRect(o[0] * s, o[1] * s, Math.max(1.5, o[2] * s), Math.max(1.5, o[3] * s));
             }
 
+            if (floorDef().links) {
+                for (const l of floorDef().links) {
+                    ctx.fillStyle = 'rgba(34,184,166,0.9)';
+                    ctx.fillRect(l.x * s, l.y * s, Math.max(4, l.w * s), Math.max(4, l.h * s));
+                }
+            }
+
             ctx.strokeStyle = 'rgba(255,255,255,0.85)';
             ctx.lineWidth = 1;
             ctx.strokeRect(camera.x * s, camera.y * s, VIEW_W * s, VIEW_H * s);
             for (const [pid, rp] of remotePlayers) {
                 if (!rp.alive) continue;
+                if ((rp.floor || 0) !== me.floor) continue;
                 ctx.fillStyle = rp.color;
                 ctx.beginPath(); ctx.arc(rp.x * s, rp.y * s, 2, 0, Math.PI * 2); ctx.fill();
             }
@@ -2079,7 +2290,7 @@
             ctx.font = '10px sans-serif';
             ctx.textAlign = 'left';
             ctx.textBaseline = 'bottom';
-            ctx.fillText(currentMap.name + '地图', 0, -5);
+            ctx.fillText(currentMap.name + (currentMap.floors.length > 1 ? ' ' + (FLOOR + 1) + 'F' : '') + '地图', 0, -5);
             ctx.restore();
         }
 
@@ -2135,6 +2346,7 @@
 
         function drawBullets() {
             for (const b of bullets) {
+                if (b.floor !== me.floor) continue;
                 if (!isVisible(b.x - BULLET_RADIUS, b.y - BULLET_RADIUS, BULLET_RADIUS * 2, BULLET_RADIUS * 2)) continue;
                 ctx.save();
                 ctx.shadowColor = b.ownerColor;
@@ -2443,10 +2655,11 @@
         });
 
         function updateRoomInfo() {
+            const floorLabel = currentMap.floors.length > 1 ? ` ${FLOOR + 1}F` : '';
             const info = document.getElementById('room-info');
-            if (info) info.textContent = `房间 ${roomCode || '----'} · ${currentMap.name}`;
+            if (info) info.textContent = `房间 ${roomCode || '----'} · ${currentMap.name}${floorLabel}`;
             const badge = document.getElementById('room-badge');
-            if (badge) badge.textContent = `房间 ${roomCode || '----'} · ${currentMap.name} · 换房`;
+            if (badge) badge.textContent = `房间 ${roomCode || '----'} · ${currentMap.name}${floorLabel} · 换房`;
         }
 
         function startGame() {
