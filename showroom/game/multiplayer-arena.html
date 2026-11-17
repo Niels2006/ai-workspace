@@ -1724,30 +1724,39 @@
             for (const link of f.links) {
                 const inside = me.x > link.x && me.x < link.x + link.w &&
                     me.y > link.y && me.y < link.y + link.h;
-                if (!inside) continue;
+                if (!inside) {
+                    link._armed = false;   // 离开楼梯/扶梯后需重新从入口进入
+                    continue;
+                }
+
+                const up = link.dir !== 'down';
+                // 必须从入口那一端踏上，才算真正开始上下楼
+                if (up ? me.y > link.y + link.h * 0.5 : me.y < link.y + link.h * 0.5) {
+                    link._armed = true;
+                }
+                if (!link._armed) continue;
 
                 if (link.type === 'escalator') {
                     // 电动扶梯：站上去自动输送，到末端才换层
                     const speed = 78;
-                    if (link.dir === 'down') {
-                        me.y = Math.min(link.y + link.h - 14, me.y + speed * dt);
-                        if (me.y >= link.y + link.h - 16 && now >= me.linkCooldown) {
+                    if (up) {
+                        me.y = Math.max(link.y + 14, me.y - speed * dt);
+                        if (me.y <= link.y + 18 && now >= me.linkCooldown) {
                             useLink(link);
                             return;
                         }
                     } else {
-                        me.y = Math.max(link.y + 14, me.y - speed * dt);
-                        if (me.y <= link.y + 16 && now >= me.linkCooldown) {
+                        me.y = Math.min(link.y + link.h - 14, me.y + speed * dt);
+                        if (me.y >= link.y + link.h - 18 && now >= me.linkCooldown) {
                             useLink(link);
                             return;
                         }
                     }
                 } else if (now >= me.linkCooldown) {
                     // 楼梯：必须一级级走到尽头才换层
-                    if (link.dir === 'down') {
-                        if (me.y >= link.y + link.h - 26) { useLink(link); return; }
-                    } else {
-                        if (me.y <= link.y + 26) { useLink(link); return; }
+                    if (up ? me.y <= link.y + 24 : me.y >= link.y + link.h - 24) {
+                        useLink(link);
+                        return;
                     }
                 }
             }
