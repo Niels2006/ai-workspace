@@ -984,7 +984,7 @@
                             [300, 1100], [600, 1100], [1080, 1100], [1420, 1100],
                         ],
                         links: [
-                            { x: 1300, y: 950, w: 180, h: 180, to: 1, tx: 1390, ty: 920, type: 'stairs', label: '楼梯 2F' },
+                            { x: 1300, y: 950, w: 180, h: 180, to: 1, tx: 1390, ty: 900, type: 'escalator', dir: 'up', label: '扶梯 2F' },
                         ],
                     },
                     {   // 2F
@@ -1001,54 +1001,78 @@
                             [900, 950], [1200, 200], [300, 200], [700, 200],
                         ],
                         links: [
-                            { x: 1300, y: 950, w: 180, h: 180, to: 0, tx: 1390, ty: 920, type: 'stairs', label: '楼梯 1F' },
+                            { x: 1300, y: 950, w: 180, h: 180, to: 0, tx: 1390, ty: 1180, type: 'escalator', dir: 'down', label: '扶梯 1F' },
                         ],
                     },
                 ],
             },
 
             dorm: {
-                id: 'dorm', name: '宿舍', w: 1600, h: 1200,
+                id: 'dorm', name: '宿舍', w: 1800, h: 1400,
                 floors: [{
                     ground: 'tile',
                     obstacles: [
-                        // 走廊上方两间宿舍
-                        [60, 60, 680, 24, 'wall'],
-                        [60, 60, 24, 440, 'wall'],
-                        [60, 476, 280, 24, 'wall'],
-                        [460, 476, 280, 24, 'wall'],
-                        [716, 60, 144, 440, 'wall'],
-                        [860, 60, 680, 24, 'wall'],
-                        [1516, 60, 24, 440, 'wall'],
-                        [860, 476, 280, 24, 'wall'],
-                        [1260, 476, 280, 24, 'wall'],
-                        // 走廊下方两间宿舍
-                        [60, 700, 280, 24, 'wall'],
-                        [460, 700, 280, 24, 'wall'],
-                        [60, 700, 24, 440, 'wall'],
-                        [60, 1116, 680, 24, 'wall'],
-                        [716, 700, 144, 440, 'wall'],
-                        [860, 700, 280, 24, 'wall'],
-                        [1260, 700, 280, 24, 'wall'],
-                        [1516, 700, 24, 440, 'wall'],
-                        [860, 1116, 680, 24, 'wall'],
-                        // 家具
-                        [100, 150, 150, 80, 'desk'],
-                        [420, 150, 200, 110, 'bed'],
-                        [80, 380, 70, 70, 'plant'],
-                        [1080, 150, 200, 110, 'bed'],
-                        [1300, 150, 150, 80, 'desk'],
-                        [1430, 380, 70, 70, 'plant'],
-                        [100, 850, 150, 80, 'desk'],
-                        [420, 850, 200, 110, 'bed'],
-                        [80, 1000, 70, 70, 'plant'],
-                        [1080, 850, 200, 110, 'bed'],
-                        [1300, 850, 150, 80, 'desk'],
-                        [1430, 1000, 70, 70, 'plant'],
+                        // 201（左上，800×600）
+                        [0, 0, 800, 24, 'wall'],
+                        [0, 0, 24, 600, 'wall'],
+                        [0, 576, 800, 24, 'wall'],
+                        [776, 0, 24, 250, 'wall'],
+                        [776, 370, 24, 230, 'wall'],
+                        // 202（右上）
+                        [1000, 0, 800, 24, 'wall'],
+                        [1776, 0, 24, 600, 'wall'],
+                        [1000, 576, 800, 24, 'wall'],
+                        [1000, 0, 24, 250, 'wall'],
+                        [1000, 370, 24, 230, 'wall'],
+                        // 203（左下）
+                        [0, 800, 800, 24, 'wall'],
+                        [0, 800, 24, 600, 'wall'],
+                        [0, 1376, 800, 24, 'wall'],
+                        [776, 800, 24, 250, 'wall'],
+                        [776, 1170, 24, 230, 'wall'],
+                        // 204（右下）
+                        [1000, 800, 800, 24, 'wall'],
+                        [1776, 800, 24, 600, 'wall'],
+                        [1000, 1376, 800, 24, 'wall'],
+                        [1000, 800, 24, 250, 'wall'],
+                        [1000, 1170, 24, 230, 'wall'],
+                        // 201 家具
+                        [60, 60, 200, 110, 'bed'],
+                        [520, 60, 200, 110, 'bed'],
+                        [40, 240, 110, 240, 'wardrobe'],
+                        [320, 400, 180, 90, 'desk'],
+                        [660, 470, 70, 70, 'plant'],
+                        // 202 家具
+                        [1060, 60, 200, 110, 'bed'],
+                        [1520, 60, 200, 110, 'bed'],
+                        [1040, 240, 110, 240, 'wardrobe'],
+                        [1320, 400, 180, 90, 'desk'],
+                        [1660, 470, 70, 70, 'plant'],
+                        // 203 家具
+                        [60, 860, 200, 110, 'bed'],
+                        [520, 860, 200, 110, 'bed'],
+                        [40, 1040, 110, 240, 'wardrobe'],
+                        [320, 1200, 180, 90, 'desk'],
+                        [660, 1270, 70, 70, 'plant'],
+                        // 204 家具
+                        [1060, 860, 200, 110, 'bed'],
+                        [1520, 860, 200, 110, 'bed'],
+                        [1040, 1040, 110, 240, 'wardrobe'],
+                        [1320, 1200, 180, 90, 'desk'],
+                        [1660, 1270, 70, 70, 'plant'],
                     ],
                     spawns: [
-                        [200, 600], [800, 600], [1400, 600], [1000, 600],
-                        [500, 300], [1100, 300], [400, 1000], [1200, 1000],
+                        [900, 200], [900, 1200], [300, 700], [1500, 700],
+                        [900, 700], [400, 200], [1400, 200], [400, 1000],
+                    ],
+                    // 视野分区：宿舍内只能看到本间，走廊只能看到走廊
+                    zones: [
+                        { x: 800, y: 0, w: 200, h: 1400, name: '走廊' },
+                        { x: 0, y: 600, w: 1800, h: 200, name: '走廊' },
+                        { x: 0, y: 0, w: 800, h: 600, name: '201' },
+                        { x: 1000, y: 0, w: 800, h: 600, name: '202' },
+                        { x: 0, y: 800, w: 800, h: 600, name: '203' },
+                        { x: 1000, y: 800, w: 800, h: 600, name: '204' },
                     ],
                 }],
             },
@@ -1091,7 +1115,7 @@
                             [250, 600], [1350, 600], [800, 250], [800, 950],
                         ],
                         links: [
-                            { x: 710, y: 1050, w: 180, h: 120, to: 1, tx: 800, ty: 990, type: 'escalator', label: '扶梯 2F' },
+                            { x: 710, y: 1050, w: 180, h: 120, to: 1, tx: 800, ty: 980, type: 'stairs', dir: 'up', label: '楼梯 2F' },
                         ],
                     },
                     {   // 2F 看台与健身区
@@ -1107,7 +1131,7 @@
                             [800, 220], [800, 900], [250, 550], [1350, 550],
                         ],
                         links: [
-                            { x: 710, y: 1050, w: 180, h: 120, to: 0, tx: 800, ty: 990, type: 'escalator', label: '扶梯 1F' },
+                            { x: 710, y: 1050, w: 180, h: 120, to: 0, tx: 800, ty: 980, type: 'stairs', dir: 'down', label: '楼梯 1F' },
                         ],
                     },
                 ],
@@ -1185,7 +1209,8 @@
             respawnAt: 0,
             spawnIdx: 0,
             floor: 0,
-            linkCooldown: 0
+            linkCooldown: 0,
+            zoneRef: null
         };
 
         const remotePlayers = new Map();
@@ -1679,7 +1704,12 @@
             // World bounds
             me.x = Math.max(PLAYER_RADIUS, Math.min(WORLD_W - PLAYER_RADIUS, me.x));
             me.y = Math.max(PLAYER_RADIUS, Math.min(WORLD_H - PLAYER_RADIUS, me.y));
-            checkFloorLinks();
+            const zoneNow = currentZone();
+            if (zoneNow !== me.zoneRef) {
+                me.zoneRef = zoneNow;
+                updateRoomInfo();
+            }
+            checkFloorLinks(dt);
             updateCamera();
 
             me.angle = Math.atan2(mouse.y - me.y, mouse.x - me.x);
@@ -1687,16 +1717,38 @@
             if (mouse.down) fire();
         }
 
-        function checkFloorLinks() {
+        function checkFloorLinks(dt) {
             const now = performance.now();
-            if (now < me.linkCooldown) return;
             const f = floorDef();
             if (!f.links) return;
             for (const link of f.links) {
-                if (me.x > link.x && me.x < link.x + link.w &&
-                    me.y > link.y && me.y < link.y + link.h) {
-                    useLink(link);
-                    return;
+                const inside = me.x > link.x && me.x < link.x + link.w &&
+                    me.y > link.y && me.y < link.y + link.h;
+                if (!inside) continue;
+
+                if (link.type === 'escalator') {
+                    // 电动扶梯：站上去自动输送，到末端才换层
+                    const speed = 78;
+                    if (link.dir === 'down') {
+                        me.y = Math.min(link.y + link.h - 14, me.y + speed * dt);
+                        if (me.y >= link.y + link.h - 16 && now >= me.linkCooldown) {
+                            useLink(link);
+                            return;
+                        }
+                    } else {
+                        me.y = Math.max(link.y + 14, me.y - speed * dt);
+                        if (me.y <= link.y + 16 && now >= me.linkCooldown) {
+                            useLink(link);
+                            return;
+                        }
+                    }
+                } else if (now >= me.linkCooldown) {
+                    // 楼梯：必须一级级走到尽头才换层
+                    if (link.dir === 'down') {
+                        if (me.y >= link.y + link.h - 26) { useLink(link); return; }
+                    } else {
+                        if (me.y <= link.y + 26) { useLink(link); return; }
+                    }
                 }
             }
         }
@@ -1818,6 +1870,7 @@
                 }
             }
             drawPlayer(me, true);
+            drawZoneMask();
             drawRespawnTimer();
             ctx.restore();
 
@@ -1831,6 +1884,30 @@
         function isVisible(x, y, w = 0, h = 0, pad = 60) {
             return x + w >= camera.x - pad && x <= camera.x + VIEW_W + pad &&
                 y + h >= camera.y - pad && y <= camera.y + VIEW_H + pad;
+        }
+
+        function currentZone() {
+            const f = floorDef();
+            if (!f.zones) return null;
+            for (const z of f.zones) {
+                if (me.x >= z.x && me.x <= z.x + z.w && me.y >= z.y && me.y <= z.y + z.h) return z;
+            }
+            return f.zones[0];
+        }
+
+        function drawZoneMask() {
+            const z = currentZone();
+            if (!z) return;
+            const L = camera.x, T = camera.y;
+            const R = camera.x + VIEW_W, B = camera.y + VIEW_H;
+            ctx.fillStyle = 'rgba(5,7,11,0.98)';
+            if (T < z.y) ctx.fillRect(L, T, R - L, z.y - T);
+            if (B > z.y + z.h) ctx.fillRect(L, z.y + z.h, R - L, B - (z.y + z.h));
+            const y0 = Math.max(T, z.y), y1 = Math.min(B, z.y + z.h);
+            if (y1 > y0) {
+                if (L < z.x) ctx.fillRect(L, y0, z.x - L, y1 - y0);
+                if (R > z.x + z.w) ctx.fillRect(z.x + z.w, y0, R - (z.x + z.w), y1 - y0);
+            }
         }
 
         function drawGround() {
@@ -1954,24 +2031,27 @@
                 ctx.fillStyle = 'rgba(230,235,240,0.22)';
                 ctx.fillText('保持安静，子弹除外', WORLD_W / 2, WORLD_H / 2 + 46);
             } else if (kind === 'tile') {
-                // 宿舍走廊（y 500~700）
-                ctx.fillStyle = 'rgba(150,120,88,0.22)';
-                ctx.fillRect(0, 500, WORLD_W, 200);
-                ctx.strokeStyle = 'rgba(120,95,68,0.35)';
+                // 十字走廊：横向 y600~800，纵向 x800~1000
+                ctx.fillStyle = 'rgba(150,120,88,0.20)';
+                ctx.fillRect(0, 600, WORLD_W, 200);
+                ctx.fillRect(800, 0, 200, WORLD_H);
+                ctx.strokeStyle = 'rgba(120,95,68,0.32)';
                 ctx.lineWidth = 3;
                 ctx.beginPath();
-                ctx.moveTo(0, 500); ctx.lineTo(WORLD_W, 500);
-                ctx.moveTo(0, 700); ctx.lineTo(WORLD_W, 700);
+                ctx.moveTo(0, 600); ctx.lineTo(WORLD_W, 600);
+                ctx.moveTo(0, 800); ctx.lineTo(WORLD_W, 800);
+                ctx.moveTo(800, 0); ctx.lineTo(800, WORLD_H);
+                ctx.moveTo(1000, 0); ctx.lineTo(1000, WORLD_H);
                 ctx.stroke();
-                ctx.fillStyle = 'rgba(90,70,50,0.42)';
-                ctx.font = 'bold 20px sans-serif';
-                ctx.fillText('宿 舍 走 廊', WORLD_W / 2, 600);
-                ctx.font = 'bold 18px sans-serif';
-                ctx.fillStyle = 'rgba(90,70,50,0.3)';
-                ctx.fillText('寝室 201', 400, 458);
-                ctx.fillText('寝室 202', 1200, 458);
-                ctx.fillText('寝室 203', 400, 742);
-                ctx.fillText('寝室 204', 1200, 742);
+                ctx.fillStyle = 'rgba(90,70,50,0.40)';
+                ctx.font = 'bold 22px sans-serif';
+                ctx.fillText('宿 舍 走 廊', 900, 700);
+                ctx.font = 'bold 26px sans-serif';
+                ctx.fillStyle = 'rgba(90,70,50,0.20)';
+                ctx.fillText('201', 400, 300);
+                ctx.fillText('202', 1400, 300);
+                ctx.fillText('203', 400, 1100);
+                ctx.fillText('204', 1400, 1100);
             } else if (kind === 'lab') {
                 ctx.fillStyle = 'rgba(90,150,190,0.12)';
                 ctx.fillRect(620, 180, 360, 800);
@@ -2003,22 +2083,63 @@
                 if (l.type === 'stairs') {
                     ctx.fillStyle = '#8a6a4a';
                     ctx.fillRect(l.x, l.y, l.w, l.h);
+                    // 一级级台阶
                     ctx.strokeStyle = '#d8c3a5';
                     ctx.lineWidth = 2;
-                    const steps = 6;
-                    for (let i = 1; i < steps; i++) {
-                        const yy = l.y + (l.h / steps) * i;
+                    const stepH = 13;
+                    for (let yy = l.y + stepH; yy < l.y + l.h; yy += stepH) {
                         ctx.beginPath(); ctx.moveTo(l.x + 4, yy); ctx.lineTo(l.x + l.w - 4, yy); ctx.stroke();
                     }
+                    // 两侧扶手
+                    ctx.strokeStyle = '#f0e2c8';
+                    ctx.lineWidth = 4;
+                    ctx.beginPath(); ctx.moveTo(l.x + 7, l.y + 6); ctx.lineTo(l.x + 7, l.y + l.h - 6); ctx.stroke();
+                    ctx.beginPath(); ctx.moveTo(l.x + l.w - 7, l.y + 6); ctx.lineTo(l.x + l.w - 7, l.y + l.h - 6); ctx.stroke();
+                    // 上楼 / 下楼箭头
+                    ctx.strokeStyle = 'rgba(244,239,227,0.9)';
+                    ctx.lineWidth = 4;
+                    const cx = l.x + l.w / 2;
+                    const up = l.dir !== 'down';
+                    const ay = up ? l.y + l.h - 18 : l.y + 18;
+                    const ty = up ? ay - 30 : ay + 30;
+                    ctx.beginPath(); ctx.moveTo(cx, ay); ctx.lineTo(cx, ty); ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(cx - 8, ty + (up ? 10 : -10));
+                    ctx.lineTo(cx, ty);
+                    ctx.lineTo(cx + 8, ty + (up ? 10 : -10));
+                    ctx.stroke();
                 } else if (l.type === 'escalator') {
-                    ctx.fillStyle = '#4a5560';
+                    ctx.fillStyle = '#3f4952';
                     ctx.fillRect(l.x, l.y, l.w, l.h);
-                    ctx.strokeStyle = 'rgba(255,220,120,0.75)';
-                    ctx.lineWidth = 6;
-                    for (let i = 0; i < 5; i++) {
-                        const xx = l.x + 20 + i * 32;
-                        ctx.beginPath(); ctx.moveTo(xx, l.y + l.h - 10); ctx.lineTo(xx + 22, l.y + 10); ctx.stroke();
+                    // 自动移动的踏板
+                    const t = (performance.now() / 300) % 1;
+                    const dirSign = l.dir === 'down' ? 1 : -1;
+                    ctx.strokeStyle = 'rgba(255,214,110,0.85)';
+                    ctx.lineWidth = 5;
+                    for (let i = 0; i < 7; i++) {
+                        let fr = (i / 7 + t * dirSign) % 1;
+                        if (fr < 0) fr += 1;
+                        const yy = l.y + 8 + fr * (l.h - 16);
+                        ctx.beginPath(); ctx.moveTo(l.x + 7, yy); ctx.lineTo(l.x + l.w - 7, yy); ctx.stroke();
                     }
+                    // 扶手带
+                    ctx.strokeStyle = '#cfd9e0';
+                    ctx.lineWidth = 5;
+                    ctx.beginPath(); ctx.moveTo(l.x + 5, l.y + 8); ctx.lineTo(l.x + 5, l.y + l.h - 8); ctx.stroke();
+                    ctx.beginPath(); ctx.moveTo(l.x + l.w - 5, l.y + 8); ctx.lineTo(l.x + l.w - 5, l.y + l.h - 8); ctx.stroke();
+                    // 方向箭头
+                    ctx.strokeStyle = 'rgba(255,240,180,0.95)';
+                    ctx.lineWidth = 4;
+                    const ecx = l.x + l.w / 2;
+                    const eup = l.dir !== 'down';
+                    const eay = eup ? l.y + l.h - 22 : l.y + 22;
+                    const ety = eup ? eay - 34 : eay + 34;
+                    ctx.beginPath(); ctx.moveTo(ecx, eay); ctx.lineTo(ecx, ety); ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(ecx - 9, ety + (eup ? 11 : -11));
+                    ctx.lineTo(ecx, ety);
+                    ctx.lineTo(ecx + 9, ety + (eup ? 11 : -11));
+                    ctx.stroke();
                 } else {
                     ctx.fillStyle = '#5c6b78';
                     ctx.fillRect(l.x, l.y, l.w, l.h);
@@ -2032,12 +2153,12 @@
                 const text = l.label || (l.type === 'stairs' ? '楼梯' : l.type === 'escalator' ? '扶梯' : '电梯');
                 ctx.font = 'bold 14px sans-serif';
                 const tw = ctx.measureText(text).width + 16;
-                ctx.fillStyle = 'rgba(10,16,22,0.75)';
-                ctx.fillRect(l.x + l.w / 2 - tw / 2, l.y + l.h / 2 - 12, tw, 24);
+                ctx.fillStyle = 'rgba(10,16,22,0.8)';
+                ctx.fillRect(l.x + l.w / 2 - tw / 2, l.y - 26, tw, 22);
                 ctx.fillStyle = '#f4efe3';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
-                ctx.fillText(text, l.x + l.w / 2, l.y + l.h / 2 + 1);
+                ctx.fillText(text, l.x + l.w / 2, l.y - 15);
                 ctx.restore();
             }
         }
@@ -2257,6 +2378,13 @@
             ctx.translate(mx, my);
             ctx.fillStyle = 'rgba(10,20,18,0.86)';
             ctx.fillRect(0, 0, mw, mh);
+            const zone = currentZone();
+            if (zone) {
+                ctx.save();
+                ctx.beginPath();
+                ctx.rect(zone.x * s, zone.y * s, zone.w * s, zone.h * s);
+                ctx.clip();
+            }
             for (const o of OBSTACLES) {
                 ctx.fillStyle = TYPE_COLORS[o[4]] || '#c69b73';
                 ctx.fillRect(o[0] * s, o[1] * s, Math.max(1.5, o[2] * s), Math.max(1.5, o[3] * s));
@@ -2275,8 +2403,15 @@
             for (const [pid, rp] of remotePlayers) {
                 if (!rp.alive) continue;
                 if ((rp.floor || 0) !== me.floor) continue;
+                if (zone && (rp.x < zone.x || rp.x > zone.x + zone.w || rp.y < zone.y || rp.y > zone.y + zone.h)) continue;
                 ctx.fillStyle = rp.color;
                 ctx.beginPath(); ctx.arc(rp.x * s, rp.y * s, 2, 0, Math.PI * 2); ctx.fill();
+            }
+            if (zone) {
+                ctx.restore();
+                ctx.strokeStyle = 'rgba(34,184,166,0.9)';
+                ctx.lineWidth = 1.5;
+                ctx.strokeRect(zone.x * s, zone.y * s, zone.w * s, zone.h * s);
             }
             ctx.fillStyle = me.color;
             ctx.beginPath(); ctx.arc(me.x * s, me.y * s, 3, 0, Math.PI * 2); ctx.fill();
@@ -2655,10 +2790,12 @@
 
         function updateRoomInfo() {
             const floorLabel = currentMap.floors.length > 1 ? ` ${FLOOR + 1}F` : '';
+            const zone = currentZone();
+            const zoneLabel = zone ? ` · ${zone.name}` : '';
             const info = document.getElementById('room-info');
-            if (info) info.textContent = `房间 ${roomCode || '----'} · ${currentMap.name}${floorLabel}`;
+            if (info) info.textContent = `房间 ${roomCode || '----'} · ${currentMap.name}${floorLabel}${zoneLabel}`;
             const badge = document.getElementById('room-badge');
-            if (badge) badge.textContent = `房间 ${roomCode || '----'} · ${currentMap.name}${floorLabel} · 换房`;
+            if (badge) badge.textContent = `房间 ${roomCode || '----'} · ${currentMap.name}${floorLabel}${zoneLabel} · 换房`;
         }
 
         function startGame() {
