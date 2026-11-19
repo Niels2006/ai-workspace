@@ -1725,22 +1725,28 @@
             if (!f.links) return;
             for (const link of f.links) {
                 if (link.noTrigger) continue;
-                const inside = me.x > link.x && me.x < link.x + link.w &&
-                    me.y > link.y && me.y < link.y + link.h;
+                const up = link.dir !== 'down';
+                // 出口端留一段宽容区：走快了跨过末端不算离开，仍会换层
+                const exitPad = 30;
+                const yMin = up ? link.y - exitPad : link.y;
+                const yMax = up ? link.y + link.h : link.y + link.h + exitPad;
+                const inside = me.x > link.x - 4 && me.x < link.x + link.w + 4 &&
+                    me.y > yMin && me.y < yMax;
                 if (!inside) {
                     link._armed = false;   // 离开楼梯/扶梯后需重新从入口进入
                     continue;
                 }
 
-                const up = link.dir !== 'down';
                 // 必须从入口那一端踏上，才算真正开始上下楼
-                if (up ? me.y > link.y + link.h * 0.5 : me.y < link.y + link.h * 0.5) {
+                if (!link._armed && (up ? me.y > link.y + link.h * 0.5 : me.y < link.y + link.h * 0.5)) {
                     link._armed = true;
                 }
                 if (!link._armed) continue;
 
                 if (link.type === 'escalator') {
                     // 电动扶梯：站上去自动输送，到末端才换层
+                    // 扶手约束：不让人从侧面滑出去
+                    me.x = Math.max(link.x + 10, Math.min(link.x + link.w - 10, me.x));
                     const speed = 78;
                     if (up) {
                         me.y = Math.max(link.y + 14, me.y - speed * dt);
@@ -1930,12 +1936,32 @@
             }
         }
 
+        // 在遮罩之上勾出其它寝室的位置，避免看起来“地图上只有走廊”
+        function drawZoneHints(active) {
+            const f = floorDef();
+            if (!f.zones) return;
+            ctx.save();
+            ctx.setLineDash([12, 9]);
+            ctx.lineWidth = 2;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            for (const z of f.zones) {
+                if (z === active || z.name === '走廊') continue;
+                ctx.strokeStyle = 'rgba(122,152,184,0.5)';
+                ctx.strokeRect(z.x + 2, z.y + 2, z.w - 4, z.h - 4);
+                ctx.fillStyle = 'rgba(150,178,205,0.24)';
+                ctx.font = 'bold 72px sans-serif';
+                ctx.fillText(z.name, z.x + z.w / 2, z.y + z.h / 2);
+            }
+            ctx.restore();
+        }
+
         function drawZoneMask() {
             const z = currentZone();
             if (!z) return;
             const L = camera.x, T = camera.y;
             const R = camera.x + VIEW_W, B = camera.y + VIEW_H;
-            ctx.fillStyle = 'rgba(5,7,11,0.9)';
+            ctx.fillStyle = 'rgba(5,7,11,0.86)';
             if (T < z.y) ctx.fillRect(L, T, R - L, z.y - T);
             if (B > z.y + z.h) ctx.fillRect(L, z.y + z.h, R - L, B - (z.y + z.h));
             const y0 = Math.max(T, z.y), y1 = Math.min(B, z.y + z.h);
@@ -1943,6 +1969,7 @@
                 if (L < z.x) ctx.fillRect(L, y0, z.x - L, y1 - y0);
                 if (R > z.x + z.w) ctx.fillRect(z.x + z.w, y0, R - (z.x + z.w), y1 - y0);
             }
+            drawZoneHints(z);
             drawDoorSigns();
         }
 
