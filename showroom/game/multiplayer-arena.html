@@ -876,7 +876,8 @@
                     <div class="status" id="join-status"></div>
                     <div class="hint">
                         WASD / 方向键 移动<br>
-                        鼠标瞄准 · 左键 / 空格 射击
+                        鼠标瞄准 · 左键 / 空格 射击<br>
+                        E 躲进 / 离开宿舍柜子
                     </div>
                 </div>
 
@@ -1010,71 +1011,69 @@
             },
 
             dorm: {
-                id: 'dorm', name: '宿舍', w: 1800, h: 1400,
+                id: 'dorm', name: '宿舍', w: 1800, h: 1200,
                 floors: [{
                     ground: 'tile',
                     obstacles: [
                         // 201（左上，800×600）
                         [0, 0, 800, 24, 'wall'],
                         [0, 0, 24, 600, 'wall'],
-                        [0, 576, 800, 24, 'wall'],
-                        [776, 0, 24, 250, 'wall'],
-                        [776, 370, 24, 230, 'wall'],
+                        [0, 576, 800, 48, 'wall'],
+                        [776, 0, 24, 240, 'wall'],
+                        [776, 360, 24, 216, 'wall'],
                         // 202（右上）
                         [1000, 0, 800, 24, 'wall'],
                         [1776, 0, 24, 600, 'wall'],
-                        [1000, 576, 800, 24, 'wall'],
-                        [1000, 0, 24, 250, 'wall'],
-                        [1000, 370, 24, 230, 'wall'],
+                        [1000, 576, 800, 48, 'wall'],
+                        [1000, 0, 24, 240, 'wall'],
+                        [1000, 360, 24, 216, 'wall'],
                         // 203（左下）
-                        [0, 800, 800, 24, 'wall'],
-                        [0, 800, 24, 600, 'wall'],
-                        [0, 1376, 800, 24, 'wall'],
-                        [776, 800, 24, 250, 'wall'],
-                        [776, 1170, 24, 230, 'wall'],
+                        [0, 600, 24, 600, 'wall'],
+                        [0, 1176, 800, 24, 'wall'],
+                        [776, 600, 24, 240, 'wall'],
+                        [776, 960, 24, 240, 'wall'],
                         // 204（右下）
-                        [1000, 800, 800, 24, 'wall'],
-                        [1776, 800, 24, 600, 'wall'],
-                        [1000, 1376, 800, 24, 'wall'],
-                        [1000, 800, 24, 250, 'wall'],
-                        [1000, 1170, 24, 230, 'wall'],
-                        // 201 家具
+                        [1776, 600, 24, 600, 'wall'],
+                        [1000, 1176, 800, 24, 'wall'],
+                        [1000, 600, 24, 240, 'wall'],
+                        [1000, 960, 24, 240, 'wall'],
+                        // 201 家具（门在右墙 y240~360，门前留空）
                         [60, 60, 200, 110, 'bed'],
-                        [520, 60, 200, 110, 'bed'],
-                        [40, 240, 110, 240, 'wardrobe'],
-                        [320, 400, 180, 90, 'desk'],
-                        [660, 470, 70, 70, 'plant'],
+                        [60, 200, 200, 110, 'bed'],
+                        [600, 60, 120, 200, 'wardrobe'],
+                        [560, 420, 180, 80, 'desk'],
+                        [60, 480, 70, 70, 'plant'],
                         // 202 家具
-                        [1060, 60, 200, 110, 'bed'],
-                        [1520, 60, 200, 110, 'bed'],
-                        [1040, 240, 110, 240, 'wardrobe'],
-                        [1320, 400, 180, 90, 'desk'],
-                        [1660, 470, 70, 70, 'plant'],
-                        // 203 家具
-                        [60, 860, 200, 110, 'bed'],
-                        [520, 860, 200, 110, 'bed'],
-                        [40, 1040, 110, 240, 'wardrobe'],
-                        [320, 1200, 180, 90, 'desk'],
-                        [660, 1270, 70, 70, 'plant'],
+                        [1540, 60, 200, 110, 'bed'],
+                        [1540, 200, 200, 110, 'bed'],
+                        [1080, 60, 120, 200, 'wardrobe'],
+                        [1060, 420, 180, 80, 'desk'],
+                        [1670, 480, 70, 70, 'plant'],
+                        // 203 家具（门在右墙 y840~960）
+                        [60, 660, 200, 110, 'bed'],
+                        [60, 800, 200, 110, 'bed'],
+                        [600, 660, 120, 200, 'wardrobe'],
+                        [560, 1020, 180, 80, 'desk'],
+                        [60, 1080, 70, 70, 'plant'],
                         // 204 家具
-                        [1060, 860, 200, 110, 'bed'],
-                        [1520, 860, 200, 110, 'bed'],
-                        [1040, 1040, 110, 240, 'wardrobe'],
-                        [1320, 1200, 180, 90, 'desk'],
-                        [1660, 1270, 70, 70, 'plant'],
+                        [1540, 660, 200, 110, 'bed'],
+                        [1540, 800, 200, 110, 'bed'],
+                        [1080, 660, 120, 200, 'wardrobe'],
+                        [1060, 1020, 180, 80, 'desk'],
+                        [1670, 1080, 70, 70, 'plant'],
                     ],
+                    // 出生点全部落在寝室内部
                     spawns: [
-                        [900, 200], [900, 1200], [300, 700], [1500, 700],
-                        [900, 700], [400, 200], [1400, 200], [400, 1000],
+                        [300, 300], [1500, 300], [300, 900], [1500, 900],
+                        [400, 450], [1400, 450], [400, 1050], [1400, 1050],
                     ],
-                    // 视野分区：宿舍内只能看到本间，走廊只能看到走廊
+                    // 视野分区：只有一条纵向走廊，宿舍内只能看到本间
                     zones: [
-                        { x: 800, y: 0, w: 200, h: 1400, name: '走廊' },
-                        { x: 0, y: 600, w: 1800, h: 200, name: '走廊' },
+                        { x: 800, y: 0, w: 200, h: 1200, name: '走廊' },
                         { x: 0, y: 0, w: 800, h: 600, name: '201' },
                         { x: 1000, y: 0, w: 800, h: 600, name: '202' },
-                        { x: 0, y: 800, w: 800, h: 600, name: '203' },
-                        { x: 1000, y: 800, w: 800, h: 600, name: '204' },
+                        { x: 0, y: 600, w: 800, h: 600, name: '203' },
+                        { x: 1000, y: 600, w: 800, h: 600, name: '204' },
                     ],
                 }],
             },
@@ -1172,6 +1171,7 @@
         let FLOOR = 0;
         let OBSTACLES = [];
         let SPAWNS = [];
+        let HIDE_SPOTS = [];
 
         function floorDef() {
             return currentMap.floors[FLOOR];
@@ -1212,7 +1212,10 @@
             spawnIdx: 0,
             floor: 0,
             linkCooldown: 0,
-            zoneRef: null
+            zoneRef: null,
+            riding: null,
+            hidden: false,
+            hideSpot: null
         };
 
         const remotePlayers = new Map();
@@ -1393,7 +1396,9 @@
             const f = floors[FLOOR];
             OBSTACLES = f.obstacles;
             SPAWNS = f.spawns;
+            HIDE_SPOTS = OBSTACLES.filter(o => o[4] === 'wardrobe');
             me.floor = FLOOR;
+            me.riding = null;
         }
 
         function applyMap(mapId) {
@@ -1445,6 +1450,7 @@
                         targetX: payload.x, targetY: payload.y, targetAngle: payload.angle,
                         health: payload.health, score: payload.score, alive: payload.alive,
                         floor: payload.floor || 0,
+                        hidden: !!payload.hidden,
                         lastSeen: performance.now()
                     });
                     showToast(`${payload.name} 进入${currentMap.name}`);
@@ -1459,6 +1465,7 @@
                     rp.score = payload.score;
                     rp.alive = payload.alive;
                     rp.floor = payload.floor || 0;
+                    rp.hidden = !!payload.hidden;
                     rp.lastSeen = performance.now();
                 }
             });
@@ -1480,7 +1487,7 @@
             });
 
             channel.on('broadcast', { event: 'hit' }, ({ payload }) => {
-                if (payload.targetId === me.id) {
+                if (payload.targetId === me.id && !me.hidden) {
                     me.health = Math.max(0, me.health - BULLET_DAMAGE);
                     spawnHitParticles(me.x, me.y, '#ff4444');
                     if (me.health <= 0 && me.alive) {
@@ -1566,7 +1573,8 @@
                     health: me.health,
                     score: me.score,
                     alive: me.alive,
-                    floor: me.floor
+                    floor: me.floor,
+                    hidden: !!me.hidden
                 }
             });
         }
@@ -1610,6 +1618,19 @@
             for (const o of OBSTACLES) {
                 if (circleRectCollide(x, y, r, o[0], o[1], o[2], o[3])) return true;
             }
+            // 扶梯两侧扶手 + 出口挡板：只能从入口一端进入
+            const f = floorDef();
+            if (f.links) {
+                for (const l of f.links) {
+                    if (l.type !== 'escalator') continue;
+                    const up = l.dir !== 'down';
+                    if (circleRectCollide(x, y, r, l.x - 3, l.y, 3, l.h)) return true;
+                    if (circleRectCollide(x, y, r, l.x + l.w, l.y, 3, l.h)) return true;
+                    // 装饰用的反向扶梯两端都封住
+                    if ((up || l.noTrigger) && circleRectCollide(x, y, r, l.x, l.y - 10, l.w, 10)) return true;
+                    if ((!up || l.noTrigger) && circleRectCollide(x, y, r, l.x, l.y + l.h, l.w, 10)) return true;
+                }
+            }
             return false;
         }
 
@@ -1619,11 +1640,61 @@
         function respawn() {
             me.alive = true;
             me.health = MAX_HEALTH;
+            me.hidden = false;
+            me.hideSpot = null;
+            me.riding = null;
             const sp = SPAWNS[me.spawnIdx % SPAWNS.length];
             me.spawnIdx++;
             me.x = sp[0];
             me.y = sp[1];
             updateCamera();
+        }
+
+        function nearestWardrobe() {
+            for (const o of HIDE_SPOTS) {
+                const cx = Math.max(o[0], Math.min(me.x, o[0] + o[2]));
+                const cy = Math.max(o[1], Math.min(me.y, o[1] + o[3]));
+                if (Math.hypot(me.x - cx, me.y - cy) <= PLAYER_RADIUS + 26) return o;
+            }
+            return null;
+        }
+
+        function toggleHide() {
+            if (!me.alive || me.riding) return;
+            if (me.hidden) {
+                const o = me.hideSpot;
+                me.hidden = false;
+                me.hideSpot = null;
+                if (o) {
+                    const cx = o[0] + o[2] / 2, cy = o[1] + o[3] / 2;
+                    const cand = [
+                        [o[0] + o[2] + PLAYER_RADIUS + 6, cy],
+                        [o[0] - PLAYER_RADIUS - 6, cy],
+                        [cx, o[1] + o[3] + PLAYER_RADIUS + 6],
+                        [cx, o[1] - PLAYER_RADIUS - 6],
+                    ];
+                    for (const [px, py] of cand) {
+                        if (px > PLAYER_RADIUS && px < WORLD_W - PLAYER_RADIUS &&
+                            py > PLAYER_RADIUS && py < WORLD_H - PLAYER_RADIUS &&
+                            !collidesWithObstacle(px, py, PLAYER_RADIUS)) {
+                            me.x = px; me.y = py;
+                            break;
+                        }
+                    }
+                }
+                showToast('从柜子里出来了');
+            } else {
+                const o = nearestWardrobe();
+                if (!o) return;
+                me.hidden = true;
+                me.hideSpot = o;
+                me.x = o[0] + o[2] / 2;
+                me.y = o[1] + o[3] / 2;
+                showToast('躲进柜子，按 E 出来');
+            }
+            updateCamera();
+            broadcastState();
+            lastSync = performance.now();
         }
 
         function spawnBullet(x, y, angle, ownerId, ownerColor, isLocal, floor) {
@@ -1681,6 +1752,14 @@
         function updateLocalPlayer(dt) {
             if (!me.alive) {
                 if (performance.now() / 1000 >= me.respawnAt) respawn();
+                return;
+            }
+            if (me.hidden) return;   // 躲进柜子：不动、不射击
+
+            if (me.riding) {
+                // 站在扶梯上：不再叠加玩家自己的移动速度，只随扶梯走
+                checkFloorLinks(dt);
+                updateCamera();
                 return;
             }
 
@@ -1745,8 +1824,7 @@
 
                 if (link.type === 'escalator') {
                     // 电动扶梯：站上去自动输送，到末端才换层
-                    // 扶手约束：不让人从侧面滑出去
-                    me.x = Math.max(link.x + 10, Math.min(link.x + link.w - 10, me.x));
+                    me.riding = link;
                     const speed = 78;
                     if (up) {
                         me.y = Math.max(link.y + 14, me.y - speed * dt);
@@ -1772,6 +1850,7 @@
         }
 
         function useLink(link) {
+            me.riding = null;
             applyFloor(link.to);
             me.x = link.tx;
             me.y = link.ty;
@@ -1826,7 +1905,7 @@
                 if (b.isLocal && b.ownerId === me.id) {
                     let hit = false;
                     for (const [pid, rp] of remotePlayers) {
-                        if (!rp.alive) continue;
+                        if (!rp.alive || rp.hidden) continue;
                         if ((rp.floor || 0) !== b.floor) continue;
                         const d = Math.hypot(b.x - rp.x, b.y - rp.y);
                         if (d < PLAYER_RADIUS + BULLET_RADIUS) {
@@ -1840,7 +1919,7 @@
                 }
 
                 // Remote bullet vs local player
-                if (!b.isLocal && me.alive && b.floor === me.floor) {
+                if (!b.isLocal && me.alive && !me.hidden && b.floor === me.floor) {
                     const d = Math.hypot(b.x - me.x, b.y - me.y);
                     if (d < PLAYER_RADIUS + BULLET_RADIUS) {
                         const owner = remotePlayers.get(b.ownerId);
@@ -1883,12 +1962,14 @@
 
             for (const [pid, rp] of remotePlayers) {
                 if ((rp.floor || 0) !== me.floor) continue;
+                if (rp.hidden) continue;
                 if (isVisible(rp.x - PLAYER_RADIUS, rp.y - PLAYER_RADIUS, PLAYER_RADIUS * 2, PLAYER_RADIUS * 2)) {
                     drawPlayer(rp, false);
                 }
             }
-            drawPlayer(me, true);
+            if (!me.hidden) drawPlayer(me, true);
             drawZoneMask();
+            drawHidePrompt();
             drawRespawnTimer();
             ctx.restore();
 
@@ -1913,47 +1994,54 @@
             return f.zones[0];
         }
 
+        // 宿舍门：墙体缺口 + 走廊侧门牌
         const DORM_DOORS = [
-            { x: 788, y: 310, t: '201' },
-            { x: 1012, y: 310, t: '202' },
-            { x: 788, y: 1110, t: '203' },
-            { x: 1012, y: 1110, t: '204' },
+            { x: 776, y: 240, w: 24, h: 120, signX: 822, signY: 300, t: '201' },
+            { x: 1000, y: 240, w: 24, h: 120, signX: 978, signY: 300, t: '202' },
+            { x: 776, y: 840, w: 24, h: 120, signX: 822, signY: 900, t: '203' },
+            { x: 1000, y: 840, w: 24, h: 120, signX: 978, signY: 900, t: '204' },
         ];
 
-        function drawDoorSigns() {
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.font = 'bold 15px sans-serif';
-            for (const s of DORM_DOORS) {
-                if (!isVisible(s.x - 30, s.y - 15, 60, 30, 40)) continue;
-                ctx.fillStyle = 'rgba(34,184,166,0.18)';
-                ctx.fillRect(s.x - 26, s.y - 14, 52, 28);
-                ctx.strokeStyle = 'rgba(34,184,166,0.85)';
-                ctx.lineWidth = 1.5;
-                ctx.strokeRect(s.x - 26, s.y - 14, 52, 28);
-                ctx.fillStyle = 'rgba(214,242,238,0.95)';
-                ctx.fillText(s.t, s.x, s.y + 1);
-            }
-        }
+        // 走廊两侧墙体（遮罩之后再画一次，保证走廊有边界感）
+        const DORM_WALL_SEGS = [
+            [776, 0, 24, 240], [776, 360, 24, 480], [776, 960, 24, 240],
+            [1000, 0, 24, 240], [1000, 360, 24, 480], [1000, 960, 24, 240],
+        ];
 
-        // 在遮罩之上勾出其它寝室的位置，避免看起来“地图上只有走廊”
-        function drawZoneHints(active) {
-            const f = floorDef();
-            if (!f.zones) return;
-            ctx.save();
-            ctx.setLineDash([12, 9]);
-            ctx.lineWidth = 2;
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            for (const z of f.zones) {
-                if (z === active || z.name === '走廊') continue;
-                ctx.strokeStyle = 'rgba(122,152,184,0.5)';
-                ctx.strokeRect(z.x + 2, z.y + 2, z.w - 4, z.h - 4);
-                ctx.fillStyle = 'rgba(150,178,205,0.24)';
-                ctx.font = 'bold 72px sans-serif';
-                ctx.fillText(z.name, z.x + z.w / 2, z.y + z.h / 2);
+        function drawDormDoors() {
+            for (const w of DORM_WALL_SEGS) {
+                if (!isVisible(w[0], w[1], w[2], w[3], 20)) continue;
+                ctx.fillStyle = '#6b5b4a';
+                ctx.fillRect(w[0], w[1], w[2], w[3]);
+                ctx.strokeStyle = 'rgba(38,28,20,0.65)';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(w[0] + 1, w[1] + 1, w[2] - 2, w[3] - 2);
             }
-            ctx.restore();
+            for (const d of DORM_DOORS) {
+                if (!isVisible(d.x - 40, d.y - 20, d.w + 80, d.h + 40)) continue;
+                // 门扇
+                ctx.fillStyle = '#8a5f3c';
+                ctx.fillRect(d.x + 3, d.y + 5, d.w - 6, d.h - 10);
+                ctx.strokeStyle = '#5d3f26';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(d.x + 3, d.y + 5, d.w - 6, d.h - 10);
+                // 门把手
+                ctx.fillStyle = '#e2c579';
+                ctx.beginPath();
+                ctx.arc(d.x + d.w / 2, d.y + d.h / 2 + 30, 3.5, 0, Math.PI * 2);
+                ctx.fill();
+                // 门牌
+                ctx.fillStyle = 'rgba(34,184,166,0.2)';
+                ctx.fillRect(d.signX - 26, d.signY - 14, 52, 28);
+                ctx.strokeStyle = 'rgba(34,184,166,0.9)';
+                ctx.lineWidth = 1.5;
+                ctx.strokeRect(d.signX - 26, d.signY - 14, 52, 28);
+                ctx.fillStyle = 'rgba(214,242,238,0.95)';
+                ctx.font = 'bold 16px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(d.t, d.signX, d.signY + 1);
+            }
         }
 
         function drawZoneMask() {
@@ -1961,7 +2049,8 @@
             if (!z) return;
             const L = camera.x, T = camera.y;
             const R = camera.x + VIEW_W, B = camera.y + VIEW_H;
-            ctx.fillStyle = 'rgba(5,7,11,0.86)';
+            // 其它区域完全不透明：走廊里只能看到门和门牌
+            ctx.fillStyle = '#05070b';
             if (T < z.y) ctx.fillRect(L, T, R - L, z.y - T);
             if (B > z.y + z.h) ctx.fillRect(L, z.y + z.h, R - L, B - (z.y + z.h));
             const y0 = Math.max(T, z.y), y1 = Math.min(B, z.y + z.h);
@@ -1969,8 +2058,33 @@
                 if (L < z.x) ctx.fillRect(L, y0, z.x - L, y1 - y0);
                 if (R > z.x + z.w) ctx.fillRect(z.x + z.w, y0, R - (z.x + z.w), y1 - y0);
             }
-            drawZoneHints(z);
-            drawDoorSigns();
+            if (z.name === '走廊') drawDormDoors();
+        }
+
+        function drawPromptAt(x, y, text) {
+            ctx.save();
+            ctx.font = 'bold 14px sans-serif';
+            const tw = ctx.measureText(text).width + 18;
+            ctx.fillStyle = 'rgba(10,16,22,0.82)';
+            ctx.fillRect(x - tw / 2, y - 12, tw, 24);
+            ctx.strokeStyle = 'rgba(34,184,166,0.7)';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(x - tw / 2, y - 12, tw, 24);
+            ctx.fillStyle = '#d6f2ee';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(text, x, y + 1);
+            ctx.restore();
+        }
+
+        function drawHidePrompt() {
+            if (me.hidden) {
+                const o = me.hideSpot;
+                if (o) drawPromptAt(o[0] + o[2] / 2, o[1] - 16, '躲藏中 · 按 E 出来');
+                return;
+            }
+            const o = nearestWardrobe();
+            if (o) drawPromptAt(o[0] + o[2] / 2, o[1] - 16, '按 E 躲进柜子');
         }
 
         function drawGround() {
@@ -2174,8 +2288,9 @@
                 } else if (l.type === 'escalator') {
                     ctx.fillStyle = '#3f4952';
                     ctx.fillRect(l.x, l.y, l.w, l.h);
-                    // 自动移动的踏板
-                    const t = (performance.now() / 300) % 1;
+                    // 自动移动的踏板（动画速度与实际输送速度一致）
+                    const beltSpeed = 78;
+                    const t = (performance.now() * beltSpeed / (1000 * (l.h - 16))) % 1;
                     const dirSign = l.dir === 'down' ? 1 : -1;
                     ctx.strokeStyle = 'rgba(255,214,110,0.85)';
                     ctx.lineWidth = 5;
@@ -2190,6 +2305,10 @@
                     ctx.lineWidth = 5;
                     ctx.beginPath(); ctx.moveTo(l.x + 5, l.y + 8); ctx.lineTo(l.x + 5, l.y + l.h - 8); ctx.stroke();
                     ctx.beginPath(); ctx.moveTo(l.x + l.w - 5, l.y + 8); ctx.lineTo(l.x + l.w - 5, l.y + l.h - 8); ctx.stroke();
+                    // 出口端挡板：只能从入口一端上来
+                    ctx.fillStyle = '#cfd9e0';
+                    if (l.dir === 'down' || l.noTrigger) ctx.fillRect(l.x + 2, l.y + l.h + 1, l.w - 4, 7);
+                    if (l.dir !== 'down' || l.noTrigger) ctx.fillRect(l.x + 2, l.y - 8, l.w - 4, 7);
                     // 方向箭头
                     ctx.strokeStyle = 'rgba(255,240,180,0.95)';
                     ctx.lineWidth = 4;
@@ -2468,7 +2587,7 @@
             ctx.lineWidth = 1;
             ctx.strokeRect(camera.x * s, camera.y * s, VIEW_W * s, VIEW_H * s);
             for (const [pid, rp] of remotePlayers) {
-                if (!rp.alive) continue;
+                if (!rp.alive || rp.hidden) continue;
                 if ((rp.floor || 0) !== me.floor) continue;
                 if (zone && (rp.x < zone.x || rp.x > zone.x + zone.w || rp.y < zone.y || rp.y > zone.y + zone.h)) continue;
                 ctx.fillStyle = rp.color;
@@ -2645,6 +2764,7 @@
         window.addEventListener('keydown', e => {
             keys[e.key.toLowerCase()] = true;
             if (e.key === ' ') { e.preventDefault(); mouse.down = true; }
+            if ((e.key === 'e' || e.key === 'E') && !e.repeat && gameRunning) toggleHide();
         });
         window.addEventListener('keyup', e => {
             keys[e.key.toLowerCase()] = false;
