@@ -694,6 +694,53 @@
             background: rgba(34, 184, 166, .12);
         }
 
+        .key-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin: 6px 0 10px;
+        }
+
+        .key-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, .03);
+            border: 1px solid rgba(255, 255, 255, .08);
+            border-radius: 8px;
+        }
+
+        .key-row .key-label {
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .key-cap {
+            min-width: 56px;
+            text-align: center;
+            padding: 5px 10px;
+            border-radius: 6px;
+            border: 1px solid rgba(34, 184, 166, .6);
+            background: rgba(34, 184, 166, .12);
+            color: var(--accent2);
+            font-family: var(--mono);
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        .key-cap.capturing {
+            background: var(--red);
+            border-color: var(--red);
+            color: #fff;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .55; }
+        }
+
         #room-badge {
             position: absolute;
             right: 14px;
@@ -873,11 +920,22 @@
                     <input type="text" id="player-name" maxlength="12" placeholder="输入你的昵称">
                     <button id="go-join" class="menu-btn">进入房间</button>
                     <button id="go-create" class="menu-btn ghost">创建房间</button>
+                    <button id="go-keys" class="menu-btn ghost">键位设置</button>
                     <div class="status" id="join-status"></div>
-                    <div class="hint">
+                    <div class="hint" id="home-hint">
                         WASD / 方向键 移动<br>
                         鼠标瞄准 · 左键 / 空格 射击<br>
                         E 躲进 / 离开宿舍柜子
+                    </div>
+                </div>
+
+                <div class="screen hidden" id="screen-keys">
+                    <div class="field-label">键位设置（点击后按下新键）</div>
+                    <div class="key-list" id="key-list"></div>
+                    <div class="status" id="keys-status">方向键始终可用作移动；Esc 取消修改</div>
+                    <div style="display:flex;gap:10px;justify-content:center">
+                        <button id="keys-reset" class="mini-btn">恢复默认</button>
+                        <button class="back-btn" data-back="home">返回</button>
                     </div>
                 </div>
 
@@ -922,6 +980,7 @@
         const camera = { x: 0, y: 0 };
         const PLAYER_RADIUS = 16;
         const PLAYER_SPEED = 220;
+        const ESCALATOR_SPEED = 200;   // 略低于玩家速度：逆行时方向相互抵消
         const BULLET_SPEED = 520;
         const BULLET_RADIUS = 5;
         const FIRE_COOLDOWN = 0.32;
@@ -1213,7 +1272,6 @@
             floor: 0,
             linkCooldown: 0,
             zoneRef: null,
-            riding: null,
             hidden: false,
             hideSpot: null
         };
@@ -1224,6 +1282,14 @@
 
         const keys = {};
         const mouse = { x: WORLD_W / 2, y: WORLD_H / 2, down: false, tracked: false };
+
+        // 键位（可在主菜单修改，保存在 localStorage）
+        const DEFAULT_KEYBINDS = { up: 'w', down: 's', left: 'a', right: 'd', shoot: ' ', hide: 'e' };
+        let keybinds = Object.assign({}, DEFAULT_KEYBINDS);
+        try {
+            const saved = JSON.parse(localStorage.getItem('brawl_keybinds') || 'null');
+            if (saved) Object.assign(keybinds, saved);
+        } catch (e) { /* ignore */ }
 
         function updateCamera() {
             const previousX = camera.x, previousY = camera.y;
@@ -1398,7 +1464,6 @@
             SPAWNS = f.spawns;
             HIDE_SPOTS = OBSTACLES.filter(o => o[4] === 'wardrobe');
             me.floor = FLOOR;
-            me.riding = null;
         }
 
         function applyMap(mapId) {
@@ -1618,20 +1683,27 @@
             for (const o of OBSTACLES) {
                 if (circleRectCollide(x, y, r, o[0], o[1], o[2], o[3])) return true;
             }
-            // 扶梯两侧扶手 + 出口挡板：只能从入口一端进入
+            // 扶梯两侧扶手（出口端不封：可进出，但输送带方向会抵消玩家移动）
             const f = floorDef();
             if (f.links) {
                 for (const l of f.links) {
                     if (l.type !== 'escalator') continue;
-                    const up = l.dir !== 'down';
                     if (circleRectCollide(x, y, r, l.x - 3, l.y, 3, l.h)) return true;
                     if (circleRectCollide(x, y, r, l.x + l.w, l.y, 3, l.h)) return true;
-                    // 装饰用的反向扶梯两端都封住
-                    if ((up || l.noTrigger) && circleRectCollide(x, y, r, l.x, l.y - 10, l.w, 10)) return true;
-                    if ((!up || l.noTrigger) && circleRectCollide(x, y, r, l.x, l.y + l.h, l.w, 10)) return true;
                 }
             }
             return false;
+        }
+
+        // 当前脚下的扶梯（含装饰用的反向扶梯），用于叠加输送带速度
+        function escalatorUnder(x, y) {
+            const f = floorDef();
+            if (!f.links) return null;
+            for (const l of f.links) {
+                if (l.type !== 'escalator') continue;
+                if (x > l.x && x < l.x + l.w && y > l.y && y < l.y + l.h) return l;
+            }
+            return null;
         }
 
         // ============================================================
@@ -1642,7 +1714,6 @@
             me.health = MAX_HEALTH;
             me.hidden = false;
             me.hideSpot = null;
-            me.riding = null;
             const sp = SPAWNS[me.spawnIdx % SPAWNS.length];
             me.spawnIdx++;
             me.x = sp[0];
@@ -1660,7 +1731,7 @@
         }
 
         function toggleHide() {
-            if (!me.alive || me.riding) return;
+            if (!me.alive) return;
             if (me.hidden) {
                 const o = me.hideSpot;
                 me.hidden = false;
@@ -1756,23 +1827,22 @@
             }
             if (me.hidden) return;   // 躲进柜子：不动、不射击
 
-            if (me.riding) {
-                // 站在扶梯上：不再叠加玩家自己的移动速度，只随扶梯走
-                checkFloorLinks(dt);
-                updateCamera();
-                return;
-            }
-
             let dx = 0, dy = 0;
-            if (keys['w'] || keys['arrowup']) dy -= 1;
-            if (keys['s'] || keys['arrowdown']) dy += 1;
-            if (keys['a'] || keys['arrowleft']) dx -= 1;
-            if (keys['d'] || keys['arrowright']) dx += 1;
+            const kb = keybinds;
+            if (keys[kb.up] || keys['arrowup']) dy -= 1;
+            if (keys[kb.down] || keys['arrowdown']) dy += 1;
+            if (keys[kb.left] || keys['arrowleft']) dx -= 1;
+            if (keys[kb.right] || keys['arrowright']) dx += 1;
             const len = Math.hypot(dx, dy);
             if (len > 0) { dx /= len; dy /= len; }
 
+            // 扶梯输送带速度与玩家移动速度叠加：同方向更快，反方向相互抵消
+            let vy = dy * PLAYER_SPEED;
+            const esc = escalatorUnder(me.x, me.y);
+            if (esc) vy += (esc.dir !== 'down' ? -1 : 1) * ESCALATOR_SPEED;
+
             const nx = me.x + dx * PLAYER_SPEED * dt;
-            const ny = me.y + dy * PLAYER_SPEED * dt;
+            const ny = me.y + vy * dt;
 
             // Move X then Y separately for sliding along walls
             if (!collidesWithObstacle(nx, me.y, PLAYER_RADIUS)) {
@@ -1790,7 +1860,7 @@
                 me.zoneRef = zoneNow;
                 updateRoomInfo();
             }
-            checkFloorLinks(dt);
+            checkFloorLinks();
             updateCamera();
 
             me.angle = Math.atan2(mouse.y - me.y, mouse.x - me.x);
@@ -1798,59 +1868,42 @@
             if (mouse.down) fire();
         }
 
-        function checkFloorLinks(dt) {
+        // 输送 / 楼梯的换层判定（输送带速度在 updateLocalPlayer 里叠加）
+        function checkFloorLinks() {
             const now = performance.now();
+            if (now < me.linkCooldown) return;
             const f = floorDef();
             if (!f.links) return;
             for (const link of f.links) {
                 if (link.noTrigger) continue;
                 const up = link.dir !== 'down';
-                // 出口端留一段宽容区：走快了跨过末端不算离开，仍会换层
-                const exitPad = 30;
-                const yMin = up ? link.y - exitPad : link.y;
-                const yMax = up ? link.y + link.h : link.y + link.h + exitPad;
                 const inside = me.x > link.x - 4 && me.x < link.x + link.w + 4 &&
-                    me.y > yMin && me.y < yMax;
+                    me.y > link.y - 4 && me.y < link.y + link.h + 4;
                 if (!inside) {
                     link._armed = false;   // 离开楼梯/扶梯后需重新从入口进入
                     continue;
                 }
-
                 // 必须从入口那一端踏上，才算真正开始上下楼
-                if (!link._armed && (up ? me.y > link.y + link.h * 0.5 : me.y < link.y + link.h * 0.5)) {
-                    link._armed = true;
-                }
-                if (!link._armed) continue;
-
-                if (link.type === 'escalator') {
-                    // 电动扶梯：站上去自动输送，到末端才换层
-                    me.riding = link;
-                    const speed = 78;
-                    if (up) {
-                        me.y = Math.max(link.y + 14, me.y - speed * dt);
-                        if (me.y <= link.y + 18 && now >= me.linkCooldown) {
-                            useLink(link);
-                            return;
-                        }
+                if (!link._armed) {
+                    if (up ? me.y > link.y + link.h * 0.5 : me.y < link.y + link.h * 0.5) {
+                        link._armed = true;
                     } else {
-                        me.y = Math.min(link.y + link.h - 14, me.y + speed * dt);
-                        if (me.y >= link.y + link.h - 18 && now >= me.linkCooldown) {
-                            useLink(link);
-                            return;
-                        }
+                        continue;
                     }
-                } else if (now >= me.linkCooldown) {
-                    // 楼梯：必须一级级走到尽头才换层
+                }
+                if (link.type === 'escalator') {
+                    if (up ? me.y <= link.y + 18 : me.y >= link.y + link.h - 18) {
+                        useLink(link); return;
+                    }
+                } else {
                     if (up ? me.y <= link.y + 24 : me.y >= link.y + link.h - 24) {
-                        useLink(link);
-                        return;
+                        useLink(link); return;
                     }
                 }
             }
         }
 
         function useLink(link) {
-            me.riding = null;
             applyFloor(link.to);
             me.x = link.tx;
             me.y = link.ty;
@@ -2289,8 +2342,7 @@
                     ctx.fillStyle = '#3f4952';
                     ctx.fillRect(l.x, l.y, l.w, l.h);
                     // 自动移动的踏板（动画速度与实际输送速度一致）
-                    const beltSpeed = 78;
-                    const t = (performance.now() * beltSpeed / (1000 * (l.h - 16))) % 1;
+                    const t = (performance.now() * ESCALATOR_SPEED / (1000 * (l.h - 16))) % 1;
                     const dirSign = l.dir === 'down' ? 1 : -1;
                     ctx.strokeStyle = 'rgba(255,214,110,0.85)';
                     ctx.lineWidth = 5;
@@ -2305,10 +2357,6 @@
                     ctx.lineWidth = 5;
                     ctx.beginPath(); ctx.moveTo(l.x + 5, l.y + 8); ctx.lineTo(l.x + 5, l.y + l.h - 8); ctx.stroke();
                     ctx.beginPath(); ctx.moveTo(l.x + l.w - 5, l.y + 8); ctx.lineTo(l.x + l.w - 5, l.y + l.h - 8); ctx.stroke();
-                    // 出口端挡板：只能从入口一端上来
-                    ctx.fillStyle = '#cfd9e0';
-                    if (l.dir === 'down' || l.noTrigger) ctx.fillRect(l.x + 2, l.y + l.h + 1, l.w - 4, 7);
-                    if (l.dir !== 'down' || l.noTrigger) ctx.fillRect(l.x + 2, l.y - 8, l.w - 4, 7);
                     // 方向箭头
                     ctx.strokeStyle = 'rgba(255,240,180,0.95)';
                     ctx.lineWidth = 4;
@@ -2762,13 +2810,16 @@
         //  INPUT
         // ============================================================
         window.addEventListener('keydown', e => {
-            keys[e.key.toLowerCase()] = true;
-            if (e.key === ' ') { e.preventDefault(); mouse.down = true; }
-            if ((e.key === 'e' || e.key === 'E') && !e.repeat && gameRunning) toggleHide();
+            if (handleKeyCapture(e)) return;   // 键位设置捕获优先
+            const k = e.key.toLowerCase();
+            keys[k] = true;
+            if (k === keybinds.shoot) { e.preventDefault(); mouse.down = true; }
+            if (k === keybinds.hide && !e.repeat && gameRunning) toggleHide();
         });
         window.addEventListener('keyup', e => {
-            keys[e.key.toLowerCase()] = false;
-            if (e.key === ' ') mouse.down = false;
+            const k = e.key.toLowerCase();
+            keys[k] = false;
+            if (k === keybinds.shoot) mouse.down = false;
         });
 
         function screenToWorld(sx, sy) {
@@ -2889,10 +2940,13 @@
         selectMap(selectedMapId);
 
         function showScreen(name) {
-            for (const id of ['home', 'join', 'create']) {
-                document.getElementById('screen-' + id).classList.toggle('hidden', id !== name);
+            for (const id of ['home', 'join', 'create', 'keys']) {
+                const el = document.getElementById('screen-' + id);
+                if (el) el.classList.toggle('hidden', id !== name);
             }
             if (name === 'join') renderRoomList();
+            if (name === 'keys') renderKeyList();
+            capturingKey = null;
         }
 
         function readName() {
@@ -2941,6 +2995,99 @@
             setStatus('create-status', '');
             showScreen('create');
         });
+
+        // ------------------------------------------------------------
+        //  键位设置
+        // ------------------------------------------------------------
+        let capturingKey = null;   // 正在等待按下新键的动作名，null 表示未捕获
+
+        const KEY_ACTION_LABELS = {
+            up: '上移', down: '下移', left: '左移', right: '右移',
+            shoot: '射击', hide: '躲进柜子'
+        };
+
+        function keyLabel(k) {
+            if (k === ' ') return '空格';
+            if (k === 'arrowup') return '↑';
+            if (k === 'arrowdown') return '↓';
+            if (k === 'arrowleft') return '←';
+            if (k === 'arrowright') return '→';
+            return k.length === 1 ? k.toUpperCase() : k;
+        }
+
+        function saveKeybinds() {
+            try { localStorage.setItem('brawl_keybinds', JSON.stringify(keybinds)); } catch (e) { /* ignore */ }
+        }
+
+        function refreshHomeHint() {
+            const h = document.getElementById('home-hint');
+            if (!h) return;
+            h.innerHTML =
+                `${keyLabel(keybinds.up)}/${keyLabel(keybinds.left)}/${keyLabel(keybinds.down)}/${keyLabel(keybinds.right)} / 方向键 移动<br>` +
+                `鼠标瞄准 · 左键 / ${keyLabel(keybinds.shoot)} 射击<br>` +
+                `${keyLabel(keybinds.hide)} 躲进 / 离开宿舍柜子`;
+        }
+
+        function renderKeyList() {
+            const list = document.getElementById('key-list');
+            if (!list) return;
+            list.innerHTML = Object.keys(KEY_ACTION_LABELS).map(action => {
+                const capClass = capturingKey === action ? 'key-cap capturing' : 'key-cap';
+                const text = capturingKey === action ? '按下新键…' : keyLabel(keybinds[action]);
+                return `<div class="key-row"><span class="key-label">${KEY_ACTION_LABELS[action]}</span>` +
+                    `<button class="${capClass}" data-action="${action}">${text}</button></div>`;
+            }).join('');
+            list.querySelectorAll('.key-cap').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    capturingKey = (capturingKey === btn.dataset.action) ? null : btn.dataset.action;
+                    renderKeyList();
+                });
+            });
+        }
+
+        // 全局 keydown 里调用：若处于捕获模式则消费按键
+        function handleKeyCapture(e) {
+            if (!capturingKey) return false;
+            e.preventDefault();
+            e.stopPropagation();
+            if (e.key === 'Escape') {
+                capturingKey = null;
+                renderKeyList();
+                setStatus('keys-status', '已取消');
+                return true;
+            }
+            const action = capturingKey;
+            const newKey = e.key.toLowerCase();
+            // 与其它动作冲突时交换按键
+            for (const act of Object.keys(keybinds)) {
+                if (act !== action && keybinds[act] === newKey) {
+                    keybinds[act] = keybinds[action];
+                }
+            }
+            keybinds[action] = newKey;
+            saveKeybinds();
+            refreshHomeHint();
+            capturingKey = null;
+            renderKeyList();
+            setStatus('keys-status', `已设置：${KEY_ACTION_LABELS[action]} → ${keyLabel(newKey)}`);
+            return true;
+        }
+
+        document.getElementById('go-keys').addEventListener('click', () => {
+            readName();
+            showScreen('keys');
+        });
+
+        document.getElementById('keys-reset').addEventListener('click', () => {
+            keybinds = Object.assign({}, DEFAULT_KEYBINDS);
+            saveKeybinds();
+            refreshHomeHint();
+            capturingKey = null;
+            renderKeyList();
+            setStatus('keys-status', '已恢复默认键位');
+        });
+
+        refreshHomeHint();
 
         document.querySelectorAll('.back-btn').forEach(btn => {
             btn.addEventListener('click', () => showScreen(btn.dataset.back));
