@@ -1683,16 +1683,25 @@
             for (const o of OBSTACLES) {
                 if (circleRectCollide(x, y, r, o[0], o[1], o[2], o[3])) return true;
             }
-            // 扶梯两侧扶手（出口端不封：可进出，但输送带方向会抵消玩家移动）
+            // 扶梯两侧扶手；穿过楼板的一端封死（另一端保持开放）
             const f = floorDef();
             if (f.links) {
                 for (const l of f.links) {
                     if (l.type !== 'escalator') continue;
                     if (circleRectCollide(x, y, r, l.x - 3, l.y, 3, l.h)) return true;
                     if (circleRectCollide(x, y, r, l.x + l.w, l.y, 3, l.h)) return true;
+                    if (escalatorSealedSide(l) === 'top' && circleRectCollide(x, y, r, l.x, l.y - 12, l.w, 12)) return true;
+                    if (escalatorSealedSide(l) === 'bottom' && circleRectCollide(x, y, r, l.x, l.y + l.h, l.w, 12)) return true;
                 }
             }
             return false;
+        }
+
+        // 扶梯穿过楼板的一端：本层是入口端时封对侧；装饰用的（本层是到达端）也封对侧
+        function escalatorSealedSide(l) {
+            const up = l.dir !== 'down';
+            if (l.noTrigger) return up ? 'bottom' : 'top';
+            return up ? 'top' : 'bottom';
         }
 
         // 当前脚下的扶梯（含装饰用的反向扶梯），用于叠加输送带速度
@@ -1892,7 +1901,8 @@
                     }
                 }
                 if (link.type === 'escalator') {
-                    if (up ? me.y <= link.y + 18 : me.y >= link.y + link.h - 18) {
+                    // 提前一点判定，避免被末端封板挡住而卡住
+                    if (up ? me.y <= link.y + 34 : me.y >= link.y + link.h - 34) {
                         useLink(link); return;
                     }
                 } else {
@@ -2357,19 +2367,16 @@
                     ctx.lineWidth = 5;
                     ctx.beginPath(); ctx.moveTo(l.x + 5, l.y + 8); ctx.lineTo(l.x + 5, l.y + l.h - 8); ctx.stroke();
                     ctx.beginPath(); ctx.moveTo(l.x + l.w - 5, l.y + 8); ctx.lineTo(l.x + l.w - 5, l.y + l.h - 8); ctx.stroke();
-                    // 方向箭头
-                    ctx.strokeStyle = 'rgba(255,240,180,0.95)';
-                    ctx.lineWidth = 4;
-                    const ecx = l.x + l.w / 2;
-                    const eup = l.dir !== 'down';
-                    const eay = eup ? l.y + l.h - 22 : l.y + 22;
-                    const ety = eup ? eay - 34 : eay + 34;
-                    ctx.beginPath(); ctx.moveTo(ecx, eay); ctx.lineTo(ecx, ety); ctx.stroke();
-                    ctx.beginPath();
-                    ctx.moveTo(ecx - 9, ety + (eup ? 11 : -11));
-                    ctx.lineTo(ecx, ety);
-                    ctx.lineTo(ecx + 9, ety + (eup ? 11 : -11));
-                    ctx.stroke();
+                    // 穿过楼板的一端封板（另一端是上下客的出口，保持敞开）
+                    const sealedTop = escalatorSealedSide(l) === 'top';
+                    const sy = sealedTop ? l.y - 11 : l.y + l.h + 1;
+                    ctx.fillStyle = '#9aa7b4';
+                    ctx.fillRect(l.x - 3, sy, l.w + 6, 10);
+                    ctx.fillStyle = 'rgba(255,255,255,0.22)';
+                    ctx.fillRect(l.x - 3, sy, l.w + 6, 3);
+                    ctx.strokeStyle = 'rgba(20,28,36,0.7)';
+                    ctx.lineWidth = 1.5;
+                    ctx.strokeRect(l.x - 3, sy, l.w + 6, 10);
                 } else {
                     ctx.fillStyle = '#5c6b78';
                     ctx.fillRect(l.x, l.y, l.w, l.h);
