@@ -984,7 +984,8 @@
                             [300, 1100], [600, 1100], [1080, 1100], [1560, 1100],
                         ],
                         links: [
-                            { x: 1300, y: 950, w: 180, h: 180, to: 1, tx: 1390, ty: 920, type: 'escalator', dir: 'up', label: '扶梯 2F' },
+                            { x: 1290, y: 950, w: 95, h: 180, to: 1, tx: 1340, ty: 920, type: 'escalator', dir: 'up', label: '扶梯 2F' },
+                            { x: 1397, y: 950, w: 95, h: 180, to: 0, dir: 'down', type: 'escalator', label: '', noTrigger: true },
                         ],
                     },
                     {   // 2F
@@ -1001,7 +1002,8 @@
                             [900, 950], [1200, 200], [300, 200], [700, 200],
                         ],
                         links: [
-                            { x: 1300, y: 950, w: 180, h: 180, to: 0, tx: 1390, ty: 1180, type: 'escalator', dir: 'down', label: '扶梯 1F' },
+                            { x: 1290, y: 950, w: 95, h: 180, to: 1, dir: 'up', type: 'escalator', label: '', noTrigger: true },
+                            { x: 1397, y: 950, w: 95, h: 180, to: 0, tx: 1440, ty: 1160, type: 'escalator', dir: 'down', label: '扶梯 1F' },
                         ],
                     },
                 ],
@@ -1722,6 +1724,7 @@
             const f = floorDef();
             if (!f.links) return;
             for (const link of f.links) {
+                if (link.noTrigger) continue;
                 const inside = me.x > link.x && me.x < link.x + link.w &&
                     me.y > link.y && me.y < link.y + link.h;
                 if (!inside) {
@@ -1904,12 +1907,35 @@
             return f.zones[0];
         }
 
+        const DORM_DOORS = [
+            { x: 788, y: 310, t: '201' },
+            { x: 1012, y: 310, t: '202' },
+            { x: 788, y: 1110, t: '203' },
+            { x: 1012, y: 1110, t: '204' },
+        ];
+
+        function drawDoorSigns() {
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.font = 'bold 15px sans-serif';
+            for (const s of DORM_DOORS) {
+                if (!isVisible(s.x - 30, s.y - 15, 60, 30, 40)) continue;
+                ctx.fillStyle = 'rgba(34,184,166,0.18)';
+                ctx.fillRect(s.x - 26, s.y - 14, 52, 28);
+                ctx.strokeStyle = 'rgba(34,184,166,0.85)';
+                ctx.lineWidth = 1.5;
+                ctx.strokeRect(s.x - 26, s.y - 14, 52, 28);
+                ctx.fillStyle = 'rgba(214,242,238,0.95)';
+                ctx.fillText(s.t, s.x, s.y + 1);
+            }
+        }
+
         function drawZoneMask() {
             const z = currentZone();
             if (!z) return;
             const L = camera.x, T = camera.y;
             const R = camera.x + VIEW_W, B = camera.y + VIEW_H;
-            ctx.fillStyle = 'rgba(5,7,11,0.98)';
+            ctx.fillStyle = 'rgba(5,7,11,0.9)';
             if (T < z.y) ctx.fillRect(L, T, R - L, z.y - T);
             if (B > z.y + z.h) ctx.fillRect(L, z.y + z.h, R - L, B - (z.y + z.h));
             const y0 = Math.max(T, z.y), y1 = Math.min(B, z.y + z.h);
@@ -1917,6 +1943,7 @@
                 if (L < z.x) ctx.fillRect(L, y0, z.x - L, y1 - y0);
                 if (R > z.x + z.w) ctx.fillRect(z.x + z.w, y0, R - (z.x + z.w), y1 - y0);
             }
+            drawDoorSigns();
         }
 
         function drawGround() {
@@ -2159,15 +2186,19 @@
                     ctx.moveTo(l.x + l.w / 2, l.y + 6); ctx.lineTo(l.x + l.w / 2, l.y + l.h - 6);
                     ctx.stroke();
                 }
-                const text = l.label || (l.type === 'stairs' ? '楼梯' : l.type === 'escalator' ? '扶梯' : '电梯');
-                ctx.font = 'bold 14px sans-serif';
-                const tw = ctx.measureText(text).width + 16;
-                ctx.fillStyle = 'rgba(10,16,22,0.8)';
-                ctx.fillRect(l.x + l.w / 2 - tw / 2, l.y - 26, tw, 22);
-                ctx.fillStyle = '#f4efe3';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText(text, l.x + l.w / 2, l.y - 15);
+                const text = l.label !== undefined
+                    ? l.label
+                    : (l.type === 'stairs' ? '楼梯' : l.type === 'escalator' ? '扶梯' : '电梯');
+                if (text) {
+                    ctx.font = 'bold 14px sans-serif';
+                    const tw = ctx.measureText(text).width + 16;
+                    ctx.fillStyle = 'rgba(10,16,22,0.8)';
+                    ctx.fillRect(l.x + l.w / 2 - tw / 2, l.y - 26, tw, 22);
+                    ctx.fillStyle = '#f4efe3';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(text, l.x + l.w / 2, l.y - 15);
+                }
                 ctx.restore();
             }
         }
