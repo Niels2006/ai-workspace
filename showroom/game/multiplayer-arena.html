@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>教室大乱斗 · Classroom Brawl Online</title>
+    <title>大乱斗 · Brawl Online</title>
     <!-- supabase-kit.js 已内联，页面可独立运行 -->
     <script>
 /*!
@@ -912,7 +912,7 @@
 
         <div class="overlay" id="join-overlay">
             <div class="join-card">
-                <h1>教室大乱斗</h1>
+                <h1>大乱斗</h1>
                 <div class="subtitle">MULTI-MAP BRAWL · ONLINE</div>
 
                 <div class="screen" id="screen-home">
@@ -1770,7 +1770,7 @@
                 me.hideSpot = o;
                 me.x = o[0] + o[2] / 2;
                 me.y = o[1] + o[3] / 2;
-                showToast('躲进柜子，按 E 出来');
+                showToast('躲进柜子，按 ' + keyLabel(keybinds.hide) + ' 出来');
             }
             updateCamera();
             broadcastState();
@@ -2143,11 +2143,11 @@
         function drawHidePrompt() {
             if (me.hidden) {
                 const o = me.hideSpot;
-                if (o) drawPromptAt(o[0] + o[2] / 2, o[1] - 16, '躲藏中 · 按 E 出来');
+                if (o) drawPromptAt(o[0] + o[2] / 2, o[1] - 16, '躲藏中 · 按 ' + keyLabel(keybinds.hide) + ' 出来');
                 return;
             }
             const o = nearestWardrobe();
-            if (o) drawPromptAt(o[0] + o[2] / 2, o[1] - 16, '按 E 躲进柜子');
+            if (o) drawPromptAt(o[0] + o[2] / 2, o[1] - 16, '按 ' + keyLabel(keybinds.hide) + ' 躲进柜子');
         }
 
         function drawGround() {
