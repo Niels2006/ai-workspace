@@ -376,10 +376,10 @@ const COL = {
   highHor:  new THREE.Color('#c4dbe8'),
   lowSun:   new THREE.Color('#ff9c5c'),
   highSun:  new THREE.Color('#fff6e2'),
-  lowDeep:  new THREE.Color('#03101a'),
-  highDeep: new THREE.Color('#04202c'),
-  lowShal:  new THREE.Color('#0a4a52'),
-  highShal: new THREE.Color('#0f8189'),
+  lowDeep:  new THREE.Color('#020b17'),
+  highDeep: new THREE.Color('#03182b'),
+  lowShal:  new THREE.Color('#07334d'),
+  highShal: new THREE.Color('#0a5f8a'),
   lowFoam:  new THREE.Color('#ffd9bb'),
   highFoam: new THREE.Color('#f3ffff'),
   lowSSS:   new THREE.Color('#ff9550'),
@@ -409,7 +409,7 @@ const waterUniforms = {
   uSkyTop:  { value: new THREE.Color() },
   uHorizon: { value: new THREE.Color() },
   uFogColor:{ value: new THREE.Color() },
-  uFogDensity: { value: 0.0030 },
+  uFogDensity: { value: 0.0022 },
   // 点击涟漪：xy = 水面坐标，z = 起始时间，w = 强度
   uRipples: { value: Array.from({ length: 8 }, () => new THREE.Vector4(0, 0, -999, 0)) },
   // 海啸涌浪
@@ -549,19 +549,22 @@ const waterMaterial = new THREE.ShaderMaterial({
         }
       }
 
-      // 海啸：一道巨大的环形涌浪，前缘陡、后侧缓
+      // 海啸：一道巨大的环形涌浪，高度可达数百米，前缘陡、后侧缓
       if (uTsuAmp > 0.001) {
         vec2 dvT = p - uTsuOrigin;
         float rT = max(length(dvT), 0.0001);
         float front = rT - uTsuRadius;
-        float wT = front > 0.0 ? 26.0 : 70.0;
+        float wa = 30.0 + uTsuAmp * 0.50;
+        float wb = 90.0 + uTsuAmp * 1.50;
+        float wT = front > 0.0 ? wa : wb;
         float envT = exp(-pow(front / wT, 2.0));
-        float phT = front * 0.08;
+        float kT = 3.0 / wa;
+        float phT = front * kT;
         tsuShape = envT * (cos(phT) + 0.30);
         h += uTsuAmp * tsuShape;
 
         float dEnvT = -2.0 * front / (wT * wT) * envT;
-        float dShapeT = dEnvT * (cos(phT) + 0.30) - envT * sin(phT) * 0.08;
+        float dShapeT = dEnvT * (cos(phT) + 0.30) - envT * sin(phT) * kT;
         grad += uTsuAmp * dShapeT * (dvT / rT);
       }
 
@@ -590,12 +593,32 @@ const waterMaterial = new THREE.ShaderMaterial({
     uniform vec3  uFogColor;
     uniform float uFogDensity;
     uniform float uWind;
+    uniform float uAmp;
 
     varying vec3  vWorldPos;
     varying vec3  vNormal;
     varying float vCrest;
     varying vec2  vFlat;
     varying float vTsuShape;
+
+    float hash21(vec2 p) {
+      p = fract(p * vec2(123.34, 456.21));
+      p += dot(p, p + 45.32);
+      return fract(p.x * p.y);
+    }
+    float vnoise(vec2 p) {
+      vec2 i = floor(p);
+      vec2 f = fract(p);
+      f = f * f * (3.0 - 2.0 * f);
+      float a = hash21(i);
+      float b = hash21(i + vec2(1.0, 0.0));
+      float c = hash21(i + vec2(0.0, 1.0));
+      float d = hash21(i + vec2(1.0, 1.0));
+      return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
+    }
+    float fbm2(vec2 p) {
+      return vnoise(p) * 0.65 + vnoise(p * 2.7 + 17.0) * 0.35;
+    }
 
     void main() {
       vec3 N = normalize(vNormal);
@@ -619,21 +642,28 @@ const waterMaterial = new THREE.ShaderMaterial({
       float NdV = clamp(dot(N, V), 0.0, 1.0);
       float NdL = clamp(dot(N, L), 0.0, 1.0);
 
-      // 水体本色：波峰偏亮，波谷偏深
+      // 水体本色：波峰偏亮，波谷偏深；海水吸收强，整体压深
       float crest = clamp(vCrest * 0.5 + 0.5, 0.0, 1.0);
       vec3 body = mix(uDeep, uShallow, pow(crest, 3.0));
-      body *= 0.58 + 0.42 * clamp(N.y, 0.0, 1.0);
+      body *= 0.48 + 0.52 * clamp(N.y, 0.0, 1.0);
+      body *= 0.90;
+      body += uShallow * 0.055;      // 环境补光，阴影面不至于死黑
 
       // 逆光波峰的次表面透光
       float sss = pow(clamp(dot(V, -L) * 0.5 + 0.5, 0.0, 1.0), 3.0)
                 * smoothstep(0.55, 1.0, crest);
       body += uSSS * sss * 0.75;
 
-      // 菲涅尔反射天空
+      // 菲涅尔反射：反射光被水体吸收并染成深海蓝，避免整片泛白
       float F = 0.02 + 0.98 * pow(1.0 - NdV, 5.0);
+      F = min(F, 0.60);
+      // 陡直浪面（如海啸墙）减少天空镜面占比，保持深蓝
+      F *= 0.30 + 0.70 * clamp(N.y, 0.0, 1.0);
       vec3 R = reflect(-V, N);
       vec3 skyRefl = mix(uHorizon, uSkyTop, pow(clamp(R.y, 0.0, 1.0), 0.55));
-      vec3 col = mix(body, skyRefl, clamp(F * 1.12, 0.0, 1.0));
+      vec3 absorbTint = mix(vec3(0.26, 0.52, 0.86), vec3(0.60, 0.88, 1.0), crest);
+      skyRefl *= absorbTint;
+      vec3 col = mix(body, skyRefl, F);
 
       // 太阳镜面高光：紧致 + 宽阔两层
       vec3 H = normalize(L + V);
@@ -642,16 +672,17 @@ const waterMaterial = new THREE.ShaderMaterial({
       float specBroad = pow(NdH, 60.0) * 0.10;
       col += uSunColor * (specTight + specBroad) * smoothstep(0.0, 0.12, NdL);
 
-      // 波峰泡沫：仅在高浪与强风时破碎成白沫；海啸涌浪自带白水
-      float n1 = sin(vFlat.x * 2.1 + uTime * 1.7) * sin(vFlat.y * 1.7 - uTime * 1.3);
-      float n2 = sin((vFlat.x + vFlat.y) * 0.9 - uTime * 0.8);
-      float foamMask = smoothstep(0.88, 1.02, crest + n1 * 0.025 + n2 * 0.02);
-      foamMask *= smoothstep(0.55, 0.95, uWind);
-      // 沿浪向拉出白沫条纹，避免大面积死白
-      float streak = 0.55 + 0.45 * sin(vFlat.x * 0.28 + uTime * 0.7 + sin(vFlat.y * 0.17 + uTime * 0.4) * 2.5);
-      foamMask *= streak;
-      float tsuFoam = smoothstep(0.55, 1.02, vTsuShape) * 0.92 * (0.45 + 0.55 * streak);
-      col = mix(col, uFoam, max(foamMask * 0.62, tsuFoam));
+      // 波峰泡沫：自然破碎的白沫；高浪时无需大风也会翻白；海啸涌浪自带白水
+      vec2 fp = vFlat + vec2(uTime * 0.9, uTime * 0.55);
+      float nFar = fbm2(fp * 0.045);
+      float nNear = fbm2(fp * 0.16 + 7.3);
+      float foamPat = mix(nFar, nNear, 1.0 - smoothstep(70.0, 360.0, dist));
+      float foamDrive = max(smoothstep(0.55, 0.95, uWind), smoothstep(1.4, 4.0, uAmp));
+      float foamMask = smoothstep(0.60, 0.92, crest + (foamPat - 0.5) * 0.34) * foamDrive;
+      foamMask *= smoothstep(0.20, 0.80, foamPat);
+      float tsuFoam = smoothstep(0.34, 0.96, vTsuShape + (foamPat - 0.5) * 0.30)
+                    * (0.40 + 0.60 * foamPat);
+      col = mix(col, uFoam, max(foamMask * 0.80, tsuFoam * 0.95));
 
       // 距离雾
       float fogF = 1.0 - exp(-pow(dist * uFogDensity, 2.0));
@@ -786,9 +817,11 @@ function tsunamiHeightAt(x, z) {
   const dz = z - tsunami.origin.y;
   const r = Math.hypot(dx, dz) + 0.0001;
   const front = r - tsunami.front;
-  const w = front > 0 ? 26 : 70;
+  const wa = 30 + tsunami.amp * 0.5;
+  const wb = 90 + tsunami.amp * 1.5;
+  const w = front > 0 ? wa : wb;
   const env = Math.exp(-Math.pow(front / w, 2));
-  return tsunami.amp * env * (Math.cos(front * 0.08) + 0.30);
+  return tsunami.amp * env * (Math.cos(front * (3 / wa)) + 0.30);
 }
 
 /* ============================================================
@@ -797,6 +830,7 @@ function tsunamiHeightAt(x, z) {
 const sunDir = new THREE.Vector3();
 const tmpColA = new THREE.Color();
 const tmpColB = new THREE.Color();
+const fogC = new THREE.Color();
 
 function smoothstep(a, b, x) {
   const t = Math.min(1, Math.max(0, (x - a) / (b - a)));
@@ -827,14 +861,16 @@ function updateSky() {
   waterUniforms.uSunDir.value.copy(sunDir);
   waterUniforms.uSkyTop.value.copy(top);
   waterUniforms.uHorizon.value.copy(hor);
-  if (!underwater) waterUniforms.uFogColor.value.copy(hor);
+  // 远处雾色掺入深蓝，避免海平面泛白
+  fogC.copy(hor).lerp(waterUniforms.uDeep.value, 0.5);
+  if (!underwater) waterUniforms.uFogColor.value.copy(fogC);
 
   sunLight.position.copy(sunDir).multiplyScalar(320);
   sunLight.color.copy(sunC);
   sunLight.intensity = 1.1 + 1.3 * t;
   hemiLight.intensity = 0.65 + 0.55 * t;
 
-  if (!underwater) scene.fog.color.copy(hor);
+  if (!underwater) scene.fog.color.copy(fogC);
 }
 updateSky();
 
@@ -932,8 +968,8 @@ function updateUnderwater(dt) {
     scene.fog.density = 0.011;
     exposureTarget = 0.82;
   } else {
-    waterUniforms.uFogColor.value.copy(waterUniforms.uHorizon.value);
-    waterUniforms.uFogDensity.value = 0.0030;
+    waterUniforms.uFogColor.value.copy(fogC);
+    waterUniforms.uFogDensity.value = 0.0022;
     scene.fog.density = 0.0030;
     exposureTarget = 1.04;
   }
@@ -1095,7 +1131,9 @@ function triggerTsunami() {
   tsunami.active = true;
   tsunami.t0 = clockTime;
   tsunami.front = 0;
-  tsunami.amp = 7 + state.amp * 0.6;
+  // 涌浪高度：约 45~550 m 振幅（峰值可达 60~700 m），随浪高滑块放大
+  tsunami.amp = 45 + state.amp * 40;
+  tsunami.speed = 32 + Math.sqrt(tsunami.amp) * 2.2;
   const ang = (Math.random() - 0.5) * 0.55;
   tsunami.origin.set(Math.sin(ang) * 420, -Math.cos(ang) * 420);
   waterUniforms.uTsuOrigin.value.copy(tsunami.origin);
@@ -1108,7 +1146,7 @@ function triggerTsunami() {
 function updateTsunami(t) {
   if (!tsunami.active) return;
   tsunami.front = (t - tsunami.t0) * tsunami.speed;
-  if (tsunami.front > 980) {
+  if (tsunami.front > 1000 + tsunami.amp * 2.2) {
     tsunami.active = false;
     tsunami.amp = 0;
     waterUniforms.uTsuAmp.value = 0;
@@ -1122,9 +1160,10 @@ function updateTsunami(t) {
     camera.position.z - tsunami.origin.y
   );
   const d = tsunami.front - camR;
+  const peak = Math.round(tsunami.amp * 1.3);
   tsuDist.textContent = d > 0
-    ? `已越过视点 ${Math.round(d)} m`
-    : `距视点 ${Math.round(-d)} m`;
+    ? `涌浪 ${peak} m · 已越过视点 ${Math.round(d)} m`
+    : `涌浪 ${peak} m · 距视点 ${Math.round(-d)} m`;
 }
 
 tTsu.addEventListener('click', triggerTsunami);
@@ -1189,8 +1228,9 @@ function animate() {
       camera.position.z - tsunami.origin.y
     );
     const d = tsunami.front - camR;
-    if (Math.abs(d) < 90) {
-      const shake = (1 - Math.abs(d) / 90) * 0.55;
+    if (Math.abs(d) < 140) {
+      const k = 1 - Math.abs(d) / 140;
+      const shake = k * k * 1.4;
       camera.position.x += Math.sin(t * 37.0) * shake;
       camera.position.y += Math.sin(t * 51.0 + 1.7) * shake * 0.6;
       camera.position.z += Math.cos(t * 43.0) * shake;
